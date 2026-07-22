@@ -6,11 +6,25 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).replace(/ /g, " ");
 }
 
+type LedgerFilters = { search: string; from: string; to: string };
+
+type FilterSectionProps = {
+  onFiltersChange: (filters: LedgerFilters) => void;
+  onAddTransaction: () => void;
+};
+
 /* "Filter Section" */
-export default function FilterSection() {
+export default function FilterSection({ onFiltersChange, onAddTransaction }: FilterSectionProps) {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  // Applied filters live in the parent; drafts are committed on Apply.
+  const [applied, setApplied] = useState<LedgerFilters>({ search: "", from: "", to: "" });
+
+  const commit = (next: LedgerFilters) => {
+    setApplied(next);
+    onFiltersChange(next);
+  };
 
   return (
     <div className="bg-white content-stretch flex flex-col items-start overflow-clip p-[16px] relative rounded-[24px] shrink-0 w-full" data-name="Filter Section">
@@ -30,7 +44,15 @@ export default function FilterSection() {
                   />
                 </div>
                 <div className="content-stretch flex gap-[8px] items-center relative shrink-0" data-name="Right Icons">
-                  <button type="button" onClick={() => setSearch("")} className="cursor-pointer" aria-label="Clear search">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch("");
+                      commit({ ...applied, search: "" });
+                    }}
+                    className="cursor-pointer"
+                    aria-label="Clear search"
+                  >
                     <ClearIcon />
                   </button>
                 </div>
@@ -46,7 +68,11 @@ export default function FilterSection() {
                   <input
                     type="date"
                     value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
+                    onChange={(e) => {
+                      setFromDate(e.target.value);
+                      // clearing a date restores the unfiltered list immediately
+                      if (!e.target.value) commit({ ...applied, from: "" });
+                    }}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     aria-label="From date"
                   />
@@ -61,7 +87,10 @@ export default function FilterSection() {
                   <input
                     type="date"
                     value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
+                    onChange={(e) => {
+                      setToDate(e.target.value);
+                      if (!e.target.value) commit({ ...applied, to: "" });
+                    }}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     aria-label="To date"
                   />
@@ -69,9 +98,7 @@ export default function FilterSection() {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  /* apply search + date range filters */
-                }}
+                onClick={() => commit({ search, from: fromDate, to: toDate })}
                 className="bg-[#28459d] content-stretch flex h-[40px] items-center justify-center px-[16px] py-[8px] relative rounded-[24px] shrink-0 w-[88px] cursor-pointer"
                 data-name="Apply Button Container"
               >
@@ -82,9 +109,7 @@ export default function FilterSection() {
             </div>
             <button
               type="button"
-              onClick={() => {
-                /* open Add Transaction flow */
-              }}
+              onClick={onAddTransaction}
               className="bg-[#1b9e74] content-stretch flex gap-[4px] h-[40px] items-center justify-center px-[16px] py-[8px] relative rounded-[24px] shrink-0 cursor-pointer"
               data-name="Create Auction Button Container"
             >

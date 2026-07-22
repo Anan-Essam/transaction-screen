@@ -6,9 +6,10 @@ import PaymentSummary from "./components/PaymentSummary";
 import FilterSection from "./components/FilterSection";
 import BidItemInfo from "./components/BidItemInfo";
 import { ArrowDownIcon, SupportIcon, ChatIcon, BellIcon, SearchIcon } from "./components/icons";
+import type { LedgerRow } from "./data";
 
 /* "Frame 61" — user profile row above the sidebar */
-function UserProfile() {
+export function UserProfile() {
   return (
     <div className="content-stretch flex items-center relative shrink-0 w-full lg:w-[200px]">
       <div className="content-stretch flex items-center justify-between relative shrink-0 w-full lg:w-[201px]">
@@ -46,7 +47,7 @@ function UserProfile() {
 }
 
 /* "Frame 137" — logo + quick actions + search */
-function TopBar() {
+export function TopBar() {
   const [search, setSearch] = useState("");
 
   return (
@@ -102,8 +103,18 @@ function TopBar() {
   );
 }
 
+export type LedgerFilters = { search: string; from: string; to: string };
+
+type MoneyTransactionsProps = {
+  rows: LedgerRow[];
+  onViewRow: (row: LedgerRow) => void;
+  onAddToRow: (row: LedgerRow) => void;
+  onAddTransaction: () => void;
+};
+
 /* "Money Transactions" screen */
-export default function MoneyTransactions() {
+export default function MoneyTransactions({ rows, onViewRow, onAddToRow, onAddTransaction }: MoneyTransactionsProps) {
+  const [filters, setFilters] = useState<LedgerFilters>({ search: "", from: "", to: "" });
   return (
     <div className="bg-[#f5f5f5] content-stretch flex flex-col items-start min-h-screen p-[24px] relative w-full" data-name="Money Transactions">
       <div className="content-stretch flex flex-col lg:flex-row gap-[16px] lg:h-[1018px] items-start lg:justify-center relative shrink-0 w-full max-w-[1392px] mx-auto" data-name="Sidebar Container">
@@ -118,8 +129,8 @@ export default function MoneyTransactions() {
           <div className="content-stretch flex items-start justify-end relative shrink-0 w-full">
             <div className="content-stretch flex flex-[1_0_0] flex-col gap-[24px] items-start min-w-px relative">
               <PaymentSummary />
-              <FilterSection />
-              <BidItemInfo />
+              <FilterSection onFiltersChange={setFilters} onAddTransaction={onAddTransaction} />
+              <BidItemInfo rows={rows} filters={filters} onViewRow={onViewRow} onAddToRow={onAddToRow} />
             </div>
           </div>
         </div>

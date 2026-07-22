@@ -1,34 +1,10 @@
 import { useState } from "react";
 import imgGroup17 from "../assets/figma/imgGroup17.svg";
 import { LedgerIcon, CloudDownloadIcon, VuesaxLinearEye, CreateAuctionIcon } from "./icons";
+import { parseLedgerDate } from "../data";
+import type { LedgerRow } from "../data";
 
-type TransactionType = "Waste" | "Money";
-type TransactionStatus = "Active" | "Closed";
-
-type Transaction = {
-  paymentId: string;
-  buyer: string;
-  auction: string;
-  product: string;
-  type: TransactionType;
-  date: string;
-  paymentAmount: string;
-  committedQty: string;
-  status: TransactionStatus;
-  editDisabled?: boolean;
-};
-
-const TRANSACTIONS: Transaction[] = [
-  { paymentId: "PO-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Iron Scrap", type: "Waste", date: "27 Jun 2026", paymentAmount: "-", committedQty: "1,000 kg", status: "Active" },
-  { paymentId: "MT-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Buyer-level settlement", type: "Money", date: "27 Jun 2026", paymentAmount: "200,500 EGP", committedQty: "-", status: "Closed", editDisabled: true },
-  { paymentId: "PO-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Iron Scrap", type: "Waste", date: "27 Jun 2026", paymentAmount: "-", committedQty: "1,000 kg", status: "Active" },
-  { paymentId: "PO-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Iron Scrap", type: "Waste", date: "27 Jun 2026", paymentAmount: "-", committedQty: "1,000 kg", status: "Closed" },
-  { paymentId: "MT-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Buyer-level settlement", type: "Money", date: "27 Jun 2026", paymentAmount: "200,500 EGP", committedQty: "-", status: "Active" },
-  { paymentId: "PO-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Iron Scrap", type: "Waste", date: "27 Jun 2026", paymentAmount: "-", committedQty: "1,000 kg", status: "Active" },
-  { paymentId: "MT-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Buyer-level settlement", type: "Money", date: "27 Jun 2026", paymentAmount: "200,500 EGP", committedQty: "-", status: "Active" },
-  { paymentId: "MT-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Buyer-level settlement", type: "Money", date: "27 Jun 2026", paymentAmount: "200,500 EGP", committedQty: "-", status: "Closed" },
-  { paymentId: "PO-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Iron Scrap", type: "Waste", date: "27 Jun 2026", paymentAmount: "-", committedQty: "1,000 kg", status: "Active" },
-];
+type Transaction = LedgerRow;
 
 const CATEGORY_TABS = [
   { label: "All", textClassName: "w-[18px]" },
@@ -79,7 +55,7 @@ function Badge({ label, color, fixedWidth }: { label: string; color: "green" | "
 }
 
 /* "Bid Row" */
-function BidRow({ transaction, striped }: { transaction: Transaction; striped: boolean }) {
+function BidRow({ transaction, striped, onView, onAdd }: { transaction: Transaction; striped: boolean; onView: () => void; onAdd: () => void }) {
   const t = transaction;
   return (
     <div className={`${striped ? "bg-[#f9f9f9] " : ""}content-stretch flex items-center justify-between p-[8px] relative shrink-0 w-full`} data-name="Bid Row">
@@ -119,9 +95,7 @@ function BidRow({ transaction, striped }: { transaction: Transaction; striped: b
       <div className="content-stretch flex gap-[8px] items-center py-[2px] relative shrink-0" data-name="Iconex/Light/Lock">
         <button
           type="button"
-          onClick={() => {
-            /* view transaction details */
-          }}
+          onClick={onView}
           className="bg-[rgba(40,69,157,0.08)] content-stretch flex flex-col items-center justify-center overflow-clip p-[8px] relative rounded-[32px] shrink-0 size-[28px] cursor-pointer"
           data-name="arrow btn"
           aria-label="View transaction"
@@ -131,9 +105,7 @@ function BidRow({ transaction, striped }: { transaction: Transaction; striped: b
         <button
           type="button"
           disabled={t.editDisabled}
-          onClick={() => {
-            /* add payment / movement for this transaction */
-          }}
+          onClick={onAdd}
           className={`bg-[rgba(218,218,218,0.5)] content-stretch flex flex-col items-center justify-center ${t.editDisabled ? "opacity-30 " : ""}overflow-clip p-[8px] relative rounded-[32px] shrink-0 size-[28px] cursor-pointer disabled:cursor-default`}
           data-name="arrow btn"
           aria-label="Add to transaction"
@@ -183,11 +155,55 @@ function BiddingHeaders() {
   );
 }
 
+type LedgerFilters = { search: string; from: string; to: string };
+
+type BidItemInfoProps = {
+  rows: LedgerRow[];
+  filters: LedgerFilters;
+  onViewRow: (row: LedgerRow) => void;
+  onAddToRow: (row: LedgerRow) => void;
+};
+
+/* Tab + search + date-range filters all apply together (AND) */
+function applyFilters(rows: LedgerRow[], activeTab: string, filters: LedgerFilters): LedgerRow[] {
+  const q = filters.search.trim().toLowerCase();
+  const from = filters.from ? new Date(filters.from + "T00:00:00") : null;
+  const to = filters.to ? new Date(filters.to + "T00:00:00") : null;
+  return rows.filter((t) => {
+    if (activeTab !== "All" && t.type !== activeTab.trim()) return false;
+    if (q && !t.product.toLowerCase().includes(q) && !t.buyer.toLowerCase().includes(q)) return false;
+    if (from || to) {
+      const d = parseLedgerDate(t.date);
+      if (!d) return false;
+      if (from && d < from) return false;
+      if (to && d > to) return false;
+    }
+    return true;
+  });
+}
+
+/* Downloads the currently visible rows as a CSV file (all visible columns) */
+function exportRowsToCsv(rows: LedgerRow[]) {
+  const header = ["Payment ID", "Buyer", "Auction", "Product", "Type", "Date", "Payment Amount", "Committed Qty", "Status"];
+  const escape = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+  const lines = [
+    header.join(","),
+    ...rows.map((t) => [t.paymentId, t.buyer, t.auction, t.product, t.type, t.date, t.paymentAmount, t.committedQty, t.status].map(escape).join(",")),
+  ];
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "transactions.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /* "Bid Item Info" — movement & money ledger card */
-export default function BidItemInfo() {
+export default function BidItemInfo({ rows, filters, onViewRow, onAddToRow }: BidItemInfoProps) {
   const [activeTab, setActiveTab] = useState<string>("All");
 
-  const visibleTransactions = TRANSACTIONS.filter((t) => activeTab === "All" || t.type === activeTab.trim());
+  const visibleTransactions = applyFilters(rows, activeTab, filters);
 
   return (
     <div className="bg-white content-stretch flex flex-col lg:h-[753px] items-start relative rounded-[24px] shrink-0 w-full" data-name="Bid Item Info">
@@ -215,9 +231,7 @@ export default function BidItemInfo() {
             </div>
             <button
               type="button"
-              onClick={() => {
-                /* export ledger as file */
-              }}
+              onClick={() => exportRowsToCsv(visibleTransactions)}
               className="bg-[rgba(40,69,157,0.1)] content-stretch flex gap-[8px] items-center pl-[8px] pr-[4px] py-[4px] relative rounded-[24px] shrink-0 cursor-pointer"
             >
               <div className="[word-break:break-word] flex flex-col font-cairo font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#28459d] text-[14px] whitespace-nowrap">
@@ -233,7 +247,7 @@ export default function BidItemInfo() {
               <BiddingHeaders />
               <div className="content-stretch flex flex-col gap-[12px] items-start relative shrink-0 w-full">
                 {visibleTransactions.map((t, i) => (
-                  <BidRow key={i} transaction={t} striped={i % 2 === 1} />
+                  <BidRow key={t.id} transaction={t} striped={i % 2 === 1} onView={() => onViewRow(t)} onAdd={() => onAddToRow(t)} />
                 ))}
               </div>
             </div>
