@@ -104,9 +104,9 @@ function BidRow({ transaction, striped, onView, onAdd }: { transaction: Transact
         </button>
         <button
           type="button"
-          disabled={t.editDisabled}
+          disabled={t.status === "Closed"}
           onClick={onAdd}
-          className={`bg-[rgba(218,218,218,0.5)] content-stretch flex flex-col items-center justify-center ${t.editDisabled ? "opacity-30 " : ""}overflow-clip p-[8px] relative rounded-[32px] shrink-0 size-[28px] cursor-pointer disabled:cursor-default`}
+          className={`bg-[rgba(218,218,218,0.5)] content-stretch flex flex-col items-center justify-center ${t.status === "Closed" ? "opacity-30 " : ""}overflow-clip p-[8px] relative rounded-[32px] shrink-0 size-[28px] cursor-pointer disabled:cursor-default`}
           data-name="arrow btn"
           aria-label="Add to transaction"
         >

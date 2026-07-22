@@ -12,7 +12,6 @@ export type LedgerRow = {
   paymentAmount: string;
   committedQty: string;
   status: TransactionStatus;
-  editDisabled?: boolean;
 };
 
 export type AuctionProduct = {
@@ -39,7 +38,7 @@ export type InstallmentRecord = { paymentId: string; label: string; date: string
 
 export const INITIAL_ROWS: LedgerRow[] = [
   { id: "t1", paymentId: "PO-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Iron Scrap", type: "Waste", date: "27 Jun 2026", paymentAmount: "-", committedQty: "1,000 kg", status: "Active" },
-  { id: "t2", paymentId: "MT-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Buyer-level settlement", type: "Money", date: "27 Jun 2026", paymentAmount: "200,500 EGP", committedQty: "-", status: "Closed", editDisabled: true },
+  { id: "t2", paymentId: "MT-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Buyer-level settlement", type: "Money", date: "27 Jun 2026", paymentAmount: "200,500 EGP", committedQty: "-", status: "Closed" },
   { id: "t3", paymentId: "PO-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Iron Scrap", type: "Waste", date: "27 Jun 2026", paymentAmount: "-", committedQty: "1,000 kg", status: "Active" },
   { id: "t4", paymentId: "PO-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Iron Scrap", type: "Waste", date: "27 Jun 2026", paymentAmount: "-", committedQty: "1,000 kg", status: "Closed" },
   { id: "t5", paymentId: "MT-2041", buyer: "Buyer #3", auction: "Auction #102", product: "Buyer-level settlement", type: "Money", date: "27 Jun 2026", paymentAmount: "200,500 EGP", committedQty: "-", status: "Active" },
