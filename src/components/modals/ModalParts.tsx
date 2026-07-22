@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import auctionThumb from "../../assets/figma/auctionThumb.jpg";
 import ellipseGreen from "../../assets/figma/ellipseGreen.svg";
 import ellipseGray from "../../assets/figma/ellipseGray.svg";
@@ -73,20 +73,13 @@ type SelectFieldProps = {
 /* ".❖ Main / Input" — floating-label select with functional dropdown menu */
 export function SelectField({ label, placeholder, value, options, onSelect, labelBackground = "gray-white", disabled }: SelectFieldProps) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, []);
 
   return (
-    <div className="relative w-full" ref={ref}>
+    <div className="relative w-full">
       <button
         type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
         onClick={() => !disabled && setOpen((o) => !o)}
         className="content-stretch cursor-pointer flex flex-col items-start relative shrink-0 w-full"
         data-name="Input"
@@ -120,25 +113,31 @@ export function SelectField({ label, placeholder, value, options, onSelect, labe
         </div>
       </button>
       {open && (
-        <div className="absolute left-0 right-0 top-[52px] z-10 bg-white border border-[#f5f5f5] border-solid rounded-[8px] overflow-hidden shadow-[0px_4px_16px_rgba(19,19,19,0.08)]">
-          {options.length === 0 ? (
-            <div className="px-[16px] py-[10px] font-cairo font-semibold text-[14px] text-[rgba(19,19,19,0.4)]">No options</div>
-          ) : (
-            options.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => {
-                  onSelect(opt);
-                  setOpen(false);
-                }}
-                className="block w-full text-left px-[16px] py-[10px] font-cairo font-semibold text-[14px] text-[#131313] cursor-pointer hover:bg-[#f9f9f9]"
-              >
-                {opt}
-              </button>
-            ))
-          )}
-        </div>
+        <>
+          {/* click-away backdrop — closes the menu without document-level listeners */}
+          <div className="fixed inset-0 z-10 cursor-default" aria-hidden onClick={() => setOpen(false)} />
+          <div role="listbox" className="absolute left-0 right-0 top-[52px] z-20 bg-white border border-[#f5f5f5] border-solid rounded-[8px] overflow-hidden shadow-[0px_4px_16px_rgba(19,19,19,0.08)]">
+            {options.length === 0 ? (
+              <div className="px-[16px] py-[10px] font-cairo font-semibold text-[14px] text-[rgba(19,19,19,0.4)]">No options</div>
+            ) : (
+              options.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  role="option"
+                  aria-selected={opt === value}
+                  onClick={() => {
+                    onSelect(opt);
+                    setOpen(false);
+                  }}
+                  className="block w-full text-left px-[16px] py-[10px] font-cairo font-semibold text-[14px] text-[#131313] cursor-pointer hover:bg-[#f9f9f9]"
+                >
+                  {opt}
+                </button>
+              ))
+            )}
+          </div>
+        </>
       )}
     </div>
   );

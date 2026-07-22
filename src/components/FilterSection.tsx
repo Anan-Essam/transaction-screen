@@ -1,5 +1,16 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SearchIcon, ClearIcon, CalendarIcon, Plus } from "./icons";
+
+/* Chromium only opens the calendar from the tiny native icon, and our input is
+   invisible — so open the picker explicitly on any click on the field. */
+function openDatePicker(input: HTMLInputElement | null) {
+  if (!input) return;
+  try {
+    input.showPicker();
+  } catch {
+    input.focus();
+  }
+}
 
 function formatDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
@@ -20,6 +31,8 @@ export default function FilterSection({ onFiltersChange, onAddTransaction }: Fil
   const [toDate, setToDate] = useState("");
   // Applied filters live in the parent; drafts are committed on Apply.
   const [applied, setApplied] = useState<LedgerFilters>({ search: "", from: "", to: "" });
+  const fromInputRef = useRef<HTMLInputElement>(null);
+  const toInputRef = useRef<HTMLInputElement>(null);
 
   const commit = (next: LedgerFilters) => {
     setApplied(next);
@@ -66,8 +79,13 @@ export default function FilterSection({ onFiltersChange, onAddTransaction }: Fil
                     </div>
                   </div>
                   <input
+                    ref={fromInputRef}
                     type="date"
                     value={fromDate}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openDatePicker(fromInputRef.current);
+                    }}
                     onChange={(e) => {
                       setFromDate(e.target.value);
                       // clearing a date restores the unfiltered list immediately
@@ -85,8 +103,13 @@ export default function FilterSection({ onFiltersChange, onAddTransaction }: Fil
                     </div>
                   </div>
                   <input
+                    ref={toInputRef}
                     type="date"
                     value={toDate}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openDatePicker(toInputRef.current);
+                    }}
                     onChange={(e) => {
                       setToDate(e.target.value);
                       if (!e.target.value) commit({ ...applied, to: "" });
