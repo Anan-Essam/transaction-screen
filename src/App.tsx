@@ -1,6 +1,10 @@
 import { useState } from "react";
 import MoneyTransactions from "./MoneyTransactions";
 import WasteTransactions from "./TransactionDetail";
+import ProductLibrary from "./ProductLibrary";
+import AddNewItem from "./components/modals/AddNewItem";
+import productPhoto from "./assets/figma/productPhoto.jpg";
+import modalPhoto from "./assets/figma/modalPhoto.jpg";
 import TransactionTypePicker from "./components/modals/TransactionTypePicker";
 import NewWasteTransaction from "./components/modals/NewWasteTransaction";
 import NewMoneyTransaction from "./components/modals/NewMoneyTransaction";
@@ -10,10 +14,13 @@ import {
   INITIAL_ROWS,
   INITIAL_PAYMENTS,
   INITIAL_INSTALLMENTS,
+  buildInitialProducts,
   formatLedgerDate,
   formatEGP,
 } from "./data";
-import type { LedgerRow } from "./data";
+import type { LedgerRow, LibraryProduct } from "./data";
+import type { NewItemSubmission } from "./components/modals/AddNewItem";
+import type { SideBarPage } from "./components/SideBar";
 import type { WasteSubmission } from "./components/modals/NewWasteTransaction";
 import type { MoneySubmission } from "./components/modals/NewMoneyTransaction";
 
@@ -23,20 +30,50 @@ type ModalState =
   | { kind: "newMoney" }
   | { kind: "addMoney"; row: LedgerRow | null }
   | { kind: "addWaste"; row: LedgerRow | null }
+  | { kind: "addItem" }
   | null;
+
+const DEFAULT_PRODUCT_IMAGES = [productPhoto, modalPhoto, productPhoto];
 
 let nextId = 100;
 const uid = () => `n${nextId++}`;
 
 export default function App() {
+  const [page, setPage] = useState<SideBarPage>("transaction");
   const [detailRow, setDetailRow] = useState<LedgerRow | null>(null);
   const [modal, setModal] = useState<ModalState>(null);
   const [rows, setRows] = useState<LedgerRow[]>(INITIAL_ROWS);
   const [payments, setPayments] = useState(INITIAL_PAYMENTS);
   const [installments, setInstallments] = useState(INITIAL_INSTALLMENTS);
+  const [products, setProducts] = useState<LibraryProduct[]>(() => buildInitialProducts(DEFAULT_PRODUCT_IMAGES));
 
   const today = formatLedgerDate(new Date());
   const close = () => setModal(null);
+  const navigate = (p: SideBarPage) => {
+    setPage(p);
+    setDetailRow(null);
+    setModal(null);
+  };
+
+  /* Add New Item modal — appends the product to the library */
+  const submitNewItem = (item: NewItemSubmission) => {
+    const product: LibraryProduct = {
+      id: uid(),
+      name: item.name,
+      categoryShort: item.category === "Iron & Steel" ? "Iron" : item.category,
+      category: item.category,
+      subcategory: item.subcategory,
+      detailTitle: item.name,
+      weight: "-",
+      color: item.color ? `Color: ${item.color}` : "Color: -",
+      dimensions: item.dimensions ? `Dimensions: ${item.dimensions}` : "Dimensions: -",
+      condition: item.condition || "-",
+      description: item.description,
+      images: item.images.length > 0 ? item.images : DEFAULT_PRODUCT_IMAGES,
+    };
+    setProducts((p) => [product, ...p]);
+    close();
+  };
 
   /* Screen 3 — new quantity transaction: one ledger row per delivered product */
   const submitNewWaste = (s: WasteSubmission) => {
@@ -124,13 +161,16 @@ export default function App() {
 
   return (
     <>
-      {detailRow ? (
+      {page === "productLibrary" ? (
+        <ProductLibrary products={products} onNavigate={navigate} onAddNewItem={() => setModal({ kind: "addItem" })} />
+      ) : detailRow ? (
         <WasteTransactions
           payments={payments}
           installments={installments}
           onBack={() => setDetailRow(null)}
           onAddMoney={() => setModal({ kind: "addMoney", row: detailRow })}
           onAddWaste={() => setModal({ kind: "addWaste", row: detailRow })}
+          onNavigate={navigate}
         />
       ) : (
         <MoneyTransactions
@@ -138,6 +178,7 @@ export default function App() {
           onViewRow={(row) => setDetailRow(row)}
           onAddToRow={(row) => setModal(row.type === "Money" ? { kind: "addMoney", row } : { kind: "addWaste", row })}
           onAddTransaction={() => setModal({ kind: "picker" })}
+          onNavigate={navigate}
         />
       )}
 
@@ -152,6 +193,7 @@ export default function App() {
       {modal?.kind === "addWaste" && (
         <AddWasteToTransaction buyer={modal.row?.buyer ?? "Buyer #7"} bidId="BID-2041" onClose={close} onSubmit={submitAddWaste} />
       )}
+      {modal?.kind === "addItem" && <AddNewItem onClose={close} onSubmit={submitNewItem} />}
     </>
   );
 }

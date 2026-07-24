@@ -7,6 +7,7 @@ import FilterSection from "./components/FilterSection";
 import BidItemInfo from "./components/BidItemInfo";
 import { ArrowDownIcon, SupportIcon, ChatIcon, BellIcon, SearchIcon } from "./components/icons";
 import type { LedgerRow } from "./data";
+import type { SideBarPage } from "./components/SideBar";
 
 /* "Frame 61" — user profile row above the sidebar */
 export function UserProfile() {
@@ -110,10 +111,11 @@ type MoneyTransactionsProps = {
   onViewRow: (row: LedgerRow) => void;
   onAddToRow: (row: LedgerRow) => void;
   onAddTransaction: () => void;
+  onNavigate: (page: SideBarPage) => void;
 };
 
 /* "Money Transactions" screen */
-export default function MoneyTransactions({ rows, onViewRow, onAddToRow, onAddTransaction }: MoneyTransactionsProps) {
+export default function MoneyTransactions({ rows, onViewRow, onAddToRow, onAddTransaction, onNavigate }: MoneyTransactionsProps) {
   const [filters, setFilters] = useState<LedgerFilters>({ search: "", from: "", to: "" });
   return (
     <div className="bg-[#f5f5f5] content-stretch flex flex-col items-start min-h-screen p-[24px] relative w-full" data-name="Money Transactions">
@@ -121,7 +123,7 @@ export default function MoneyTransactions({ rows, onViewRow, onAddToRow, onAddTr
         <div className="content-stretch flex lg:h-[969px] items-start relative shrink-0 w-full lg:w-auto">
           <div className="content-stretch flex flex-col gap-[24px] lg:h-full items-start relative shrink-0 w-full lg:w-[201px]">
             <UserProfile />
-            <SideBar className="lg:h-[940px] relative shrink-0 w-full lg:w-[200px]" />
+            <SideBar className="lg:h-[940px] relative shrink-0 w-full lg:w-[200px]" active="transaction" onNavigate={onNavigate} />
           </div>
         </div>
         <div className="content-stretch flex flex-col gap-[19px] lg:h-[1033px] items-end lg:overflow-clip relative shrink-0 w-full lg:w-auto lg:flex-[1_0_0] lg:max-w-[1159px] min-w-0">

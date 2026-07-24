@@ -6,6 +6,7 @@ import { UserProfile, TopBar } from "./MoneyTransactions";
 import { Plus } from "./components/icons";
 import { BackArrowIcon, CircleChevronButton, TagIcon, ProfileIcon, Calendar12Icon, BannerDivider, AgreementIcon, ProductIcon } from "./components/icons2";
 import type { InstallmentRecord, PaymentRecord } from "./data";
+import type { SideBarPage } from "./components/SideBar";
 
 type ProductStatus = "Done" | "In fulfilment";
 
@@ -165,10 +166,11 @@ type WasteTransactionsProps = {
   onBack: () => void;
   onAddMoney: () => void;
   onAddWaste: () => void;
+  onNavigate: (page: SideBarPage) => void;
 };
 
 /* "Waste Transactions" — Transaction Detail View (Figma 537:13657) */
-export default function WasteTransactions({ payments, installments, onBack, onAddMoney, onAddWaste }: WasteTransactionsProps) {
+export default function WasteTransactions({ payments, installments, onBack, onAddMoney, onAddWaste, onNavigate }: WasteTransactionsProps) {
   const [historyOpen, setHistoryOpen] = useState(true);
 
   return (
@@ -177,7 +179,7 @@ export default function WasteTransactions({ payments, installments, onBack, onAd
         <div className="content-stretch flex lg:h-[969px] items-start relative shrink-0 w-full lg:w-auto">
           <div className="content-stretch flex flex-col gap-[24px] lg:h-full items-start relative shrink-0 w-full lg:w-[201px]">
             <UserProfile />
-            <SideBar className="lg:h-[940px] relative shrink-0 w-full lg:w-[200px]" />
+            <SideBar className="lg:h-[940px] relative shrink-0 w-full lg:w-[200px]" active="transaction" onNavigate={onNavigate} />
           </div>
         </div>
         <div className="content-stretch flex flex-[1_0_0] flex-col gap-[19px] items-start min-w-px relative w-full lg:w-auto lg:max-w-[1159px]">

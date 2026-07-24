@@ -8,6 +8,9 @@ import {
   ReportsIcon,
   SettingsIcon,
 } from "./icons";
+import { ProductLibraryIconWhite, TransactionIconDark } from "./icons3";
+
+export type SideBarPage = "productLibrary" | "transaction";
 
 type SideBarItemProps = {
   icon: React.ReactNode;
@@ -32,7 +35,7 @@ function SideBarItem({ icon, label, onClick }: SideBarItemProps) {
   );
 }
 
-/* Active nav item — "Transaction" pill with curved corner flourishes */
+/* Active nav item — blue pill with curved corner flourishes */
 function ActiveSideBarItem({ icon, label, onClick }: SideBarItemProps) {
   return (
     <div className="h-[78px] relative shrink-0 w-[180px]">
@@ -62,7 +65,14 @@ function ActiveSideBarItem({ icon, label, onClick }: SideBarItemProps) {
   );
 }
 
-export default function SideBar({ className }: { className?: string }) {
+type SideBarProps = {
+  className?: string;
+  active?: SideBarPage;
+  onNavigate?: (page: SideBarPage) => void;
+};
+
+export default function SideBar({ className, active = "transaction", onNavigate }: SideBarProps) {
+  const go = (page: SideBarPage) => onNavigate?.(page);
   return (
     <div className={className || "lg:h-[940px] relative w-full lg:w-[200px]"} data-name="Side Bar">
       <div className="relative lg:absolute bg-white lg:inset-[0.34%_0.25%_0_0] overflow-clip rounded-[24px]">
@@ -81,20 +91,16 @@ export default function SideBar({ className }: { className?: string }) {
               /* navigate to My Auctions */
             }}
           />
-          <SideBarItem
-            icon={<ProductLibraryIcon />}
-            label="Product Library"
-            onClick={() => {
-              /* navigate to Product Library */
-            }}
-          />
-          <ActiveSideBarItem
-            icon={<TransactionIcon />}
-            label="Transaction"
-            onClick={() => {
-              /* navigate to Transaction */
-            }}
-          />
+          {active === "productLibrary" ? (
+            <ActiveSideBarItem icon={<ProductLibraryIconWhite />} label="Product Library" onClick={() => go("productLibrary")} />
+          ) : (
+            <SideBarItem icon={<ProductLibraryIcon />} label="Product Library" onClick={() => go("productLibrary")} />
+          )}
+          {active === "transaction" ? (
+            <ActiveSideBarItem icon={<TransactionIcon />} label="Transaction" onClick={() => go("transaction")} />
+          ) : (
+            <SideBarItem icon={<TransactionIconDark />} label="Transaction" onClick={() => go("transaction")} />
+          )}
           <SideBarItem
             icon={<ReportsIcon />}
             label="Reports"
@@ -111,7 +117,10 @@ export default function SideBar({ className }: { className?: string }) {
           />
         </div>
       </div>
-      <div className="absolute hidden lg:flex inset-[22.87%_0.25%_63.37%_99.75%] items-center justify-center" style={{ containerType: "size" }}>
+      <div
+        className={`absolute hidden lg:flex ${active === "productLibrary" ? "inset-[15.47%_0.25%_70.77%_99.75%]" : "inset-[22.87%_0.25%_63.37%_99.75%]"} items-center justify-center`}
+        style={{ containerType: "size" }}
+      >
         <div className="-rotate-90 flex-none h-[0px] w-[100cqh]">
           <div className="relative size-full">
             <div className="absolute inset-[-1px_0_0_0]">

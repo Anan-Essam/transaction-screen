@@ -118,3 +118,61 @@ export function formatLedgerDate(d: Date): string {
 export function formatEGP(n: number): string {
   return `${n.toLocaleString("en-US")} EGP`;
 }
+
+/* ---------------- Product Library ---------------- */
+
+export type ProductCategory = { name: string; subcategories: string[] };
+
+export const PRODUCT_CATEGORIES: ProductCategory[] = [
+  { name: "Iron & Steel", subcategories: ["Rebar Scrap", "Structural Steel", "Steel Sheets", "Steel Pipes", "Cast Iron", "Mixed Ferrous Scrap"] },
+  { name: "Metals", subcategories: ["Copper", "Aluminum", "Brass"] },
+  { name: "Plastics", subcategories: ["PET", "HDPE"] },
+];
+
+export const DIMENSION_OPTIONS = ["(1\u20132 cm)", "(2\u20135 cm)", "(5\u201310 cm)", "(10+ cm)"];
+export const CONDITION_OPTIONS = ["New", "Good Condition", "Used"];
+
+export type LibraryProduct = {
+  id: string;
+  name: string;
+  categoryShort: string; // short label shown in the row subtitle ("Iron")
+  category: string;
+  subcategory: string;
+  detailTitle: string;
+  weight: string;
+  color: string;
+  dimensions: string;
+  condition: string;
+  description: string;
+  images: string[]; // asset URLs (imported or object URLs from upload)
+};
+
+const PRODUCT_DESCRIPTION =
+  "High-quality scrap reinforcing iron with various diameters, suitable for recycling and industrial use. It features high durability and is free from large impurities, available in different quantities as needed. Ideal for smelting and remanufacturing plants.";
+
+/* Seed products: 10 in Iron & Steel (matching the Figma default view) + 2 in Metals */
+export function buildInitialProducts(defaultImages: string[]): LibraryProduct[] {
+  const ironSubs = PRODUCT_CATEGORIES[0].subcategories;
+  const products: LibraryProduct[] = [];
+  for (let i = 0; i < 10; i++) {
+    products.push({
+      id: `p${i + 1}`,
+      name: "Copper Cables Bundle",
+      categoryShort: "Iron",
+      category: "Iron & Steel",
+      subcategory: ironSubs[i % ironSubs.length],
+      detailTitle: "Iron Scrap - 500 kg",
+      weight: "15 tons",
+      color: "Color: Wooden",
+      dimensions: "Dimensions: 1 to 2 cm\u00b3",
+      condition: "Good Condition",
+      description: PRODUCT_DESCRIPTION,
+      images: defaultImages,
+    });
+  }
+  products.push(
+    { id: "p11", name: "Copper Wire Coils", categoryShort: "Metals", category: "Metals", subcategory: "Copper", detailTitle: "Copper Wire - 200 kg", weight: "8 tons", color: "Color: Copper", dimensions: "Dimensions: 1 to 2 cm\u00b3", condition: "Good Condition", description: PRODUCT_DESCRIPTION, images: defaultImages },
+    { id: "p12", name: "Aluminum Sheets Pack", categoryShort: "Metals", category: "Metals", subcategory: "Aluminum", detailTitle: "Aluminum Sheets - 300 kg", weight: "5 tons", color: "Color: Silver", dimensions: "Dimensions: 2 to 5 cm\u00b3", condition: "New", description: PRODUCT_DESCRIPTION, images: defaultImages },
+  );
+  return products;
+}

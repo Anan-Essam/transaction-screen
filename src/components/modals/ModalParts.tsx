@@ -66,7 +66,7 @@ type SelectFieldProps = {
   value: string | null;
   options: string[];
   onSelect: (value: string) => void;
-  labelBackground?: "gray-white" | "diagonal";
+  labelBackground?: "gray-white" | "diagonal" | "white";
   disabled?: boolean;
 };
 
@@ -88,7 +88,7 @@ export function SelectField({ label, placeholder, value, options, onSelect, labe
           <div className="bg-white border border-[#ccc] border-solid content-stretch flex flex-col gap-[12px] h-[48px] items-start px-[16px] relative rounded-[8px] shrink-0 w-full" data-name="Input">
             <div className="h-[0.001px] relative shrink-0 w-full" data-name="Label Container">
               <div
-                className={`[word-break:break-word] absolute content-stretch flex items-center left-0 not-italic px-[4px] rounded-[8px] text-left top-[-10px] whitespace-nowrap ${labelBackground === "gray-white" ? "bg-gradient-to-b from-[#f9f9f9] to-white" : ""}`}
+                className={`[word-break:break-word] absolute content-stretch flex items-center left-0 not-italic px-[4px] rounded-[8px] text-left top-[-10px] whitespace-nowrap ${labelBackground === "gray-white" ? "bg-gradient-to-b from-[#f9f9f9] to-white" : labelBackground === "white" ? "bg-white" : ""}`}
                 style={labelBackground === "diagonal" ? { backgroundImage: "linear-gradient(-11.165720381518426deg, rgb(255, 255, 255) 24.611%, rgb(249, 249, 249) 80.358%)" } : undefined}
                 data-name="Label"
               >
@@ -440,6 +440,38 @@ export function QtyInput({ value, onChange, width = 129 }: { value: string; onCh
         <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic opacity-80 relative shrink-0 text-[12px] text-[rgba(19,19,19,0.5)] whitespace-nowrap">
           <p className="leading-[24px]">Ton</p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+type TextFieldProps = {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+};
+
+/* ".❖ Main / Input" — floating-label free text input (white label chip) */
+export function TextField({ label, placeholder, value, onChange }: TextFieldProps) {
+  return (
+    <div className="content-stretch flex flex-col items-start relative rounded-[2px] shrink-0 w-full" data-name=".❖ Main / Input">
+      <div className="bg-white border border-[#ccc] border-solid content-stretch flex flex-col h-[48px] items-start justify-center px-[16px] relative rounded-[8px] shrink-0 w-full" data-name="Input">
+        <div className="h-[0.001px] relative shrink-0 w-full" data-name="Label Container">
+          <div className="[word-break:break-word] absolute bg-white content-stretch flex items-center left-0 not-italic px-[4px] rounded-[8px] text-left top-[-22px] whitespace-nowrap" data-name="Label">
+            <div className="flex flex-col font-cairo font-semibold justify-center leading-[0] opacity-80 relative shrink-0 text-[#131313] text-[16px]">
+              <p className="leading-[20px]">{label}</p>
+            </div>
+            <p className="font-['Source_Sans_Pro',sans-serif] font-semibold leading-[16px] opacity-80 relative shrink-0 text-[#da1414] text-[11px]">*</p>
+          </div>
+        </div>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="[word-break:break-word] w-full bg-transparent border-none outline-none font-cairo font-semibold leading-[24px] opacity-80 text-[14px] text-[#131313] placeholder:text-[rgba(19,19,19,0.6)]"
+        />
       </div>
     </div>
   );
