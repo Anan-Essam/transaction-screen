@@ -116,7 +116,7 @@ export function SelectField({ label, placeholder, value, options, onSelect, labe
         <>
           {/* click-away backdrop — closes the menu without document-level listeners */}
           <div className="fixed inset-0 z-10 cursor-default" aria-hidden onClick={() => setOpen(false)} />
-          <div role="listbox" className="absolute left-0 right-0 top-[52px] z-20 bg-white border border-[#f5f5f5] border-solid rounded-[8px] overflow-hidden shadow-[0px_4px_16px_rgba(19,19,19,0.08)]">
+          <div role="listbox" className="absolute left-0 right-0 top-[52px] z-20 bg-white border border-[#f5f5f5] border-solid rounded-[8px] overflow-hidden overflow-y-auto max-h-[240px] shadow-[0px_4px_16px_rgba(19,19,19,0.08)]">
             {options.length === 0 ? (
               <div className="px-[16px] py-[10px] font-cairo font-semibold text-[14px] text-[rgba(19,19,19,0.4)]">No options</div>
             ) : (

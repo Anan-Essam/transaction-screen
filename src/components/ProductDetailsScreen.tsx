@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { CloseCrossButton } from "./icons2";
 import { CarouselArrow, UniquenessIcon, ColorPaletteIcon, ScalesIcon, PriceIcon, CubeIcon, SurveyIcon, TrashCan24Icon, EditIcon } from "./icons3";
+import { formatDimensions } from "../data";
 import type { LibraryProduct } from "../data";
 
 type ProductDetailsScreenProps = {
   product: LibraryProduct;
   onClose: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
 };
 
 /* "Product Details Screen" — right-hand detail panel (Figma 180:13878) */
-export default function ProductDetailsScreen({ product, onClose }: ProductDetailsScreenProps) {
+export default function ProductDetailsScreen({ product, onClose, onDelete, onEdit }: ProductDetailsScreenProps) {
   const [imageIndex, setImageIndex] = useState(0);
   const images = product.images.length > 0 ? product.images : [];
   const cycle = (dir: 1 | -1) => setImageIndex((i) => (i + dir + images.length) % images.length);
@@ -77,7 +80,7 @@ export default function ProductDetailsScreen({ product, onClose }: ProductDetail
                     <UniquenessIcon />
                     <div className="[word-break:break-word] flex flex-col font-cairo font-medium justify-center leading-[0] not-italic relative shrink-0 text-[12px] text-[#4a4a4a] text-right whitespace-nowrap">
                       <p className="leading-[normal]" dir="auto">
-                        {product.categoryShort}
+                        {product.category}
                       </p>
                     </div>
                   </div>
@@ -85,7 +88,7 @@ export default function ProductDetailsScreen({ product, onClose }: ProductDetail
                     <ColorPaletteIcon />
                     <div className="[word-break:break-word] flex flex-col font-cairo font-medium justify-center leading-[0] not-italic relative shrink-0 text-[12px] text-[#4a4a4a] text-right whitespace-nowrap">
                       <p className="leading-[normal]" dir="auto">
-                        Scrap {product.categoryShort}
+                        {product.subcategory}
                       </p>
                     </div>
                   </div>
@@ -103,7 +106,7 @@ export default function ProductDetailsScreen({ product, onClose }: ProductDetail
                     <PriceIcon />
                     <div className="[word-break:break-word] flex flex-col font-cairo font-medium justify-center leading-[0] not-italic relative shrink-0 text-[12px] text-[#4a4a4a] text-right whitespace-nowrap">
                       <p className="leading-[normal]" dir="auto">
-                        {product.color}
+                        Color: {product.color || "-"}
                       </p>
                     </div>
                   </div>
@@ -113,7 +116,7 @@ export default function ProductDetailsScreen({ product, onClose }: ProductDetail
                     <CubeIcon />
                     <div className="[word-break:break-word] flex flex-col font-cairo font-medium justify-center leading-[0] not-italic relative shrink-0 text-[12px] text-[#4a4a4a] text-right whitespace-nowrap">
                       <p className="leading-[normal]" dir="auto">
-                        {product.dimensions}
+                        Dimensions: {formatDimensions(product.dimensions)}
                       </p>
                     </div>
                   </div>
@@ -145,9 +148,7 @@ export default function ProductDetailsScreen({ product, onClose }: ProductDetail
             <div className="content-stretch flex gap-[16px] h-[40px] items-center justify-end relative shrink-0 w-[329px] max-w-full">
               <button
                 type="button"
-                onClick={() => {
-                  /* delete product from library */
-                }}
+                onClick={onDelete}
                 className="bg-[#f6f6f7] content-stretch flex flex-col items-center justify-center overflow-clip p-[8px] relative rounded-[32px] shrink-0 size-[40px] cursor-pointer"
                 aria-label="Delete product"
                 data-name="arrow btn"
@@ -156,9 +157,7 @@ export default function ProductDetailsScreen({ product, onClose }: ProductDetail
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  /* open edit product flow */
-                }}
+                onClick={onEdit}
                 className="bg-[#28459d] content-stretch flex gap-[8px] h-[40px] items-center justify-center px-[16px] py-[8px] relative rounded-[24px] shrink-0 cursor-pointer"
               >
                 <EditIcon />

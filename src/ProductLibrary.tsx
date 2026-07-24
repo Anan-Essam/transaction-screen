@@ -58,12 +58,12 @@ function ProductListRow({ product, selected, onToggle }: { product: LibraryProdu
           </div>
         </div>
         <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-[132px]">
-          <div className="[word-break:break-word] flex flex-col font-cairo font-bold h-[19px] justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] w-[132px]">
-            <p className="leading-[normal]">{product.name}</p>
+          <div className="flex flex-col font-cairo font-bold h-[19px] justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] w-[132px]" title={product.name}>
+            <p className="leading-[normal] overflow-hidden text-ellipsis whitespace-nowrap">{product.name}</p>
           </div>
           <div className="content-stretch flex gap-[8px] items-center relative shrink-0">
             <div className="[word-break:break-word] flex flex-col font-cairo font-medium h-[14px] justify-center leading-[0] not-italic relative shrink-0 text-[12px] text-[rgba(19,19,19,0.7)] whitespace-nowrap">
-              <p className="leading-[normal]">{`${product.categoryShort} `}</p>
+              <p className="leading-[normal]">{`${product.category} `}</p>
             </div>
             <EllipseDot />
             <div className="[word-break:break-word] flex flex-col font-cairo font-medium h-[14px] justify-center leading-[0] not-italic relative shrink-0 text-[12px] text-[rgba(19,19,19,0.7)] whitespace-nowrap">
@@ -83,15 +83,48 @@ type ProductLibraryProps = {
   products: LibraryProduct[];
   onNavigate: (page: SideBarPage) => void;
   onAddNewItem: () => void;
+  onEditProduct: (product: LibraryProduct) => void;
+  onDeleteProduct: (id: string) => void;
 };
 
+/* Small confirmation dialog so a single accidental click never deletes */
+function ConfirmDeleteDialog({ productName, onCancel, onConfirm }: { productName: string; onCancel: () => void; onConfirm: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(19,19,19,0.4)] p-[16px]" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
+      <div className="bg-white content-stretch flex flex-col gap-[24px] items-start p-[24px] rounded-[24px] w-[400px] max-w-full">
+        <div className="content-stretch flex flex-col gap-[4px] items-start w-full">
+          <p className="font-cairo font-bold text-[18px] text-[#131313] leading-[normal]">Delete product?</p>
+          <p className="font-cairo font-medium text-[14px] text-[rgba(19,19,19,0.7)] leading-[normal]">{`\u201c${productName}\u201d will be permanently removed from the Product Library.`}</p>
+        </div>
+        <div className="content-stretch flex gap-[16px] items-center justify-end w-full">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="bg-white border border-[#28459d] border-solid content-stretch flex h-[48px] items-center justify-center px-[16px] py-[8px] rounded-[24px] w-[103px] cursor-pointer"
+          >
+            <span className="font-cairo font-bold text-[#28459d] text-[16px] leading-[normal]">Cancel</span>
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="bg-[#da1414] content-stretch flex h-[48px] items-center justify-center px-[16px] py-[8px] rounded-[24px] w-[103px] cursor-pointer"
+          >
+            <span className="font-cairo font-bold text-white text-[16px] leading-[normal]">Delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* "Product Library" screen (Figma 49:21078) */
-export default function ProductLibrary({ products, onNavigate, onAddNewItem }: ProductLibraryProps) {
+export default function ProductLibrary({ products, onNavigate, onAddNewItem, onEditProduct, onDeleteProduct }: ProductLibraryProps) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>(PRODUCT_CATEGORIES[0].name);
   const [subcategory, setSubcategory] = useState<string>("All");
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(products[0]?.id ?? null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const activeCategory = PRODUCT_CATEGORIES.find((c) => c.name === category);
   const subcategories = activeCategory ? activeCategory.subcategories : [];
@@ -212,7 +245,7 @@ export default function ProductLibrary({ products, onNavigate, onAddNewItem }: P
                             <>
                               {/* click-away backdrop — closes without document-level listeners */}
                               <div className="fixed inset-0 z-10 cursor-default" aria-hidden onClick={() => setCategoryOpen(false)} />
-                              <div role="listbox" className="absolute left-0 right-0 top-[44px] z-20 bg-white border border-[#f5f5f5] border-solid rounded-[8px] overflow-hidden shadow-[0px_4px_16px_rgba(19,19,19,0.08)]">
+                              <div role="listbox" className="absolute left-0 right-0 top-[44px] z-20 bg-white border border-[#f5f5f5] border-solid rounded-[8px] overflow-hidden overflow-y-auto max-h-[280px] shadow-[0px_4px_16px_rgba(19,19,19,0.08)]">
                                 {PRODUCT_CATEGORIES.map((c) => (
                                   <button
                                     key={c.name}
@@ -297,12 +330,31 @@ export default function ProductLibrary({ products, onNavigate, onAddNewItem }: P
                     </div>
                   </div>
                 </div>
-                {selectedProduct && <ProductDetailsScreen key={selectedProduct.id} product={selectedProduct} onClose={() => setSelectedId(null)} />}
+                {selectedProduct && (
+                  <ProductDetailsScreen
+                    key={selectedProduct.id}
+                    product={selectedProduct}
+                    onClose={() => setSelectedId(null)}
+                    onDelete={() => setConfirmingDelete(true)}
+                    onEdit={() => onEditProduct(selectedProduct)}
+                  />
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+      {confirmingDelete && selectedProduct && (
+        <ConfirmDeleteDialog
+          productName={selectedProduct.name}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() => {
+            setConfirmingDelete(false);
+            setSelectedId(null);
+            onDeleteProduct(selectedProduct.id);
+          }}
+        />
+      )}
     </div>
   );
 }

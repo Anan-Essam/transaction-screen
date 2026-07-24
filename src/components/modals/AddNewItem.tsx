@@ -1,7 +1,9 @@
 import { useRef, useState } from "react";
 import { ModalOverlay, ModalHeader, SelectField, TextField } from "./ModalParts";
 import { UploadIcon, TrashCan14Icon } from "../icons3";
-import { PRODUCT_CATEGORIES, DIMENSION_OPTIONS, CONDITION_OPTIONS } from "../../data";
+import { DropdownArrowIcon } from "../icons2";
+import { PRODUCT_CATEGORIES, CONDITION_OPTIONS, UNIT_OPTIONS } from "../../data";
+import type { LibraryProduct, ProductDimensions } from "../../data";
 
 const MAX_PHOTOS = 5;
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -12,30 +14,114 @@ export type NewItemSubmission = {
   category: string;
   subcategory: string;
   color: string;
-  dimensions: string;
+  dimensions: ProductDimensions;
   condition: string;
   description: string;
   images: string[]; // object URLs of uploaded photos
 };
 
+type DimensionFieldProps = {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  unit: string;
+  onUnitChange: (u: string) => void;
+};
+
+/* Dimensions "Input" — numeric value with a shared-unit dropdown suffix (Figma 739:13564) */
+function DimensionField({ label, value, onChange, unit, onUnitChange }: DimensionFieldProps) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="content-stretch flex flex-col items-start relative shrink-0 w-full md:w-[208.889px]" data-name="Input">
+      <div className="content-stretch flex flex-col items-start relative rounded-[2px] shrink-0 w-full" data-name=".❖ Main / Input">
+        <div className="bg-white border border-[#ccc] border-solid content-stretch flex flex-col gap-[12px] h-[48px] items-start justify-center px-[16px] relative rounded-[8px] shrink-0 w-full" data-name="Input">
+          <div className="h-[0.001px] relative shrink-0 w-full" data-name="Label Container">
+            <div className="[word-break:break-word] absolute bg-white content-stretch flex items-center left-0 not-italic px-[4px] rounded-[8px] top-[-22px] whitespace-nowrap" data-name="Label">
+              <div className="flex flex-col font-cairo font-semibold justify-center leading-[0] opacity-80 relative shrink-0 text-[#131313] text-[16px]">
+                <p className="leading-[20px]">{label}</p>
+              </div>
+              <p className="font-['Source_Sans_Pro',sans-serif] font-semibold leading-[16px] opacity-80 relative shrink-0 text-[#da1414] text-[11px]">*</p>
+            </div>
+          </div>
+          <div className="content-stretch flex gap-[8px] items-center overflow-visible relative shrink-0 w-full" data-name="Icons + Text">
+            <div className="border-[#f5f5f5] border-r border-solid content-stretch flex flex-[1_0_0] gap-[4px] items-start min-w-px pr-[4px] relative" data-name="Left Icon + Text">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={value}
+                onChange={(e) => onChange(e.target.value.replace(/[^\d.]/g, ""))}
+                className="[word-break:break-word] w-full min-w-0 bg-transparent border-none outline-none font-cairo font-semibold leading-[24px] opacity-80 text-[14px] text-[#131313] placeholder:text-[rgba(19,19,19,0.6)]"
+                aria-label={label}
+              />
+            </div>
+            <div className="content-stretch flex items-center relative shrink-0" data-name="Right Icons">
+              <button
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded={open}
+                onClick={() => setOpen((o) => !o)}
+                className="content-stretch flex items-center relative shrink-0 cursor-pointer"
+              >
+                <div className="[word-break:break-word] flex flex-col font-cairo font-semibold justify-center leading-[0] not-italic opacity-80 relative shrink-0 text-[14px] text-[rgba(19,19,19,0.6)] whitespace-nowrap">
+                  <p className="leading-[24px]">{unit.toUpperCase()}</p>
+                </div>
+                <DropdownArrowIcon />
+              </button>
+              {open && (
+                <>
+                  {/* click-away backdrop — closes without document-level listeners */}
+                  <div className="fixed inset-0 z-10 cursor-default" aria-hidden onClick={() => setOpen(false)} />
+                  <div role="listbox" className="absolute right-0 top-[32px] z-20 min-w-[72px] bg-white border border-[#f5f5f5] border-solid rounded-[8px] overflow-hidden shadow-[0px_4px_16px_rgba(19,19,19,0.08)]">
+                    {UNIT_OPTIONS.map((u) => (
+                      <button
+                        key={u}
+                        type="button"
+                        role="option"
+                        aria-selected={u === unit}
+                        onClick={() => {
+                          onUnitChange(u);
+                          setOpen(false);
+                        }}
+                        className="block w-full text-left px-[16px] py-[8px] font-cairo font-semibold text-[14px] text-[#131313] cursor-pointer hover:bg-[#f9f9f9]"
+                      >
+                        {u}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type AddNewItemProps = {
   onClose: () => void;
   onSubmit: (item: NewItemSubmission) => void;
+  /* when set, the modal edits this product in place instead of creating a new one */
+  initial?: LibraryProduct;
 };
 
-/* "Add New Item" — add-product modal (Figma 125:12435) */
-export default function AddNewItem({ onClose, onSubmit }: AddNewItemProps) {
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState<string | null>(null);
-  const [subcategory, setSubcategory] = useState<string | null>(null);
-  const [color, setColor] = useState("");
-  const [dimensions, setDimensions] = useState<string | null>(null);
-  const [condition, setCondition] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
-  const [photos, setPhotos] = useState<string[]>([]);
+/* "Add New Item" — add/edit-product modal (Figma 125:12435) */
+export default function AddNewItem({ onClose, onSubmit, initial }: AddNewItemProps) {
+  const [name, setName] = useState(initial?.name ?? "");
+  const [category, setCategory] = useState<string | null>(initial?.category ?? null);
+  const [subcategory, setSubcategory] = useState<string | null>(initial?.subcategory ?? null);
+  const [color, setColor] = useState(initial?.color ?? "");
+  const [condition, setCondition] = useState<string | null>(initial?.condition ?? null);
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [length, setLength] = useState(initial?.dimensions.length ?? "");
+  const [width, setWidth] = useState(initial?.dimensions.width ?? "");
+  const [height, setHeight] = useState(initial?.dimensions.height ?? "");
+  const [unit, setUnit] = useState(initial?.dimensions.unit ?? "cm");
+  const [photos, setPhotos] = useState<string[]>(initial?.images ?? []);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isEdit = !!initial;
   const activeCategory = PRODUCT_CATEGORIES.find((c) => c.name === category);
 
   const addFiles = (files: FileList | File[]) => {
@@ -50,7 +136,7 @@ export default function AddNewItem({ onClose, onSubmit }: AddNewItemProps) {
       <div className="bg-white content-stretch flex flex-col items-start p-[16px] relative rounded-[24px] w-full max-w-[702px] mx-auto" data-name="Add New Item">
         <div className="content-stretch flex items-center justify-end relative shrink-0 w-full" data-name="Container">
           <div className="content-stretch flex flex-[1_0_0] flex-col gap-[40px] items-end min-w-px overflow-x-clip relative" data-name="Container">
-            <ModalHeader title="Add New Item" closeVariant="plain" onClose={onClose} />
+            <ModalHeader title={isEdit ? "Edit Product" : "Add New Item"} closeVariant="plain" onClose={onClose} />
             <div className="content-stretch flex flex-col items-start relative shrink-0 w-full">
               <div className="content-stretch flex flex-col items-start relative shrink-0 w-full">
                 <div className="content-stretch flex flex-col gap-[24px] items-start relative shrink-0 w-full">
@@ -87,13 +173,18 @@ export default function AddNewItem({ onClose, onSubmit }: AddNewItemProps) {
                       <TextField label="Color" placeholder="Black" value={color} onChange={setColor} />
                     </div>
                     <div className="md:flex-[1_0_0] min-w-px w-full md:w-auto">
-                      <SelectField label="Dimensions" placeholder="(1–2 cm)" value={dimensions} options={DIMENSION_OPTIONS} onSelect={setDimensions} labelBackground="white" />
-                    </div>
-                    <div className="md:flex-[1_0_0] min-w-px w-full md:w-auto">
                       <SelectField label="Condition" placeholder="New" value={condition} options={CONDITION_OPTIONS} onSelect={setCondition} labelBackground="white" />
                     </div>
                   </div>
                   <TextField label="Description" placeholder="add more details if you want" value={description} onChange={setDescription} />
+                  <div className="content-stretch flex flex-col gap-[20px] items-start relative shrink-0 w-full">
+                    <p className="[word-break:break-word] font-cairo font-bold leading-[normal] not-italic relative shrink-0 text-[#131313] text-[14px] w-full">Dimensions</p>
+                    <div className="content-stretch flex flex-col md:flex-row gap-[16px] items-start relative shrink-0 w-full">
+                      <DimensionField label="Length" value={length} onChange={setLength} unit={unit} onUnitChange={setUnit} />
+                      <DimensionField label="Width" value={width} onChange={setWidth} unit={unit} onUnitChange={setUnit} />
+                      <DimensionField label="Height" value={height} onChange={setHeight} unit={unit} onUnitChange={setUnit} />
+                    </div>
+                  </div>
                   <div className="bg-[#f9f9f9] content-stretch flex flex-col items-start overflow-clip px-[18px] py-[10px] relative rounded-[16px] shrink-0 w-full" data-name="photos-card">
                     <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full max-w-[621px]">
                       <p className="[word-break:break-word] font-cairo font-bold leading-[normal] not-italic relative shrink-0 text-[#131313] text-[14px] w-full">Photos</p>
@@ -136,7 +227,7 @@ export default function AddNewItem({ onClose, onSubmit }: AddNewItemProps) {
                         />
                         <div className="content-stretch flex flex-wrap md:flex-nowrap gap-[8px] items-center relative shrink-0 w-full">
                           {photos.map((src, i) => (
-                            <div key={src} className="content-stretch flex items-center relative shrink-0 size-[97px]">
+                            <div key={`${src}-${i}`} className="content-stretch flex items-center relative shrink-0 size-[97px]">
                               <div className="flex-[1_0_0] h-full min-w-px overflow-clip relative rounded-[8px]">
                                 <img alt={`Photo ${i + 1}`} className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-[8px] size-full" src={src} />
                                 <button
@@ -195,7 +286,7 @@ export default function AddNewItem({ onClose, onSubmit }: AddNewItemProps) {
                     category: category!,
                     subcategory: subcategory!,
                     color: color.trim(),
-                    dimensions: dimensions ?? "",
+                    dimensions: { length, width, height, unit },
                     condition: condition ?? "",
                     description: description.trim(),
                     images: photos,
@@ -204,7 +295,7 @@ export default function AddNewItem({ onClose, onSubmit }: AddNewItemProps) {
                 className="bg-[#28459d] border border-solid border-white content-stretch flex h-[48px] items-center justify-center px-[16px] py-[8px] relative rounded-[24px] shrink-0 w-[103px] cursor-pointer disabled:opacity-50 disabled:cursor-default"
               >
                 <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[16px] text-white whitespace-nowrap">
-                  <p className="leading-[normal]">Add</p>
+                  <p className="leading-[normal]">{isEdit ? "Save" : "Add"}</p>
                 </div>
               </button>
             </div>

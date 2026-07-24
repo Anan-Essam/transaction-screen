@@ -124,55 +124,87 @@ export function formatEGP(n: number): string {
 export type ProductCategory = { name: string; subcategories: string[] };
 
 export const PRODUCT_CATEGORIES: ProductCategory[] = [
-  { name: "Iron & Steel", subcategories: ["Rebar Scrap", "Structural Steel", "Steel Sheets", "Steel Pipes", "Cast Iron", "Mixed Ferrous Scrap"] },
-  { name: "Metals", subcategories: ["Copper", "Aluminum", "Brass"] },
-  { name: "Plastics", subcategories: ["PET", "HDPE"] },
+  { name: "Ferrous Metals", subcategories: ["Heavy Melting Steel (HMS 1)", "HMS 2", "Cast Iron", "Stainless Steel", "Steel Turnings", "Steel Sheets", "Structural Steel", "Rebar", "Rail Scrap"] },
+  { name: "Non-Ferrous Metals", subcategories: ["Copper", "Aluminum", "Brass", "Bronze", "Lead", "Zinc", "Nickel", "Titanium", "Mixed Non-Ferrous"] },
+  { name: "Cables & Wires", subcategories: ["Copper Cable", "Aluminum Cable", "Insulated Wire", "Bare Bright Copper", "Electrical Wire", "Telecom Cable"] },
+  { name: "Electronic Scrap (E-Waste)", subcategories: ["Computers", "Laptops", "Servers", "Mobile Phones", "PCBs", "Power Supplies", "Hard Drives"] },
+  { name: "Electrical Equipment", subcategories: ["Electric Motors", "Transformers", "Generators", "Switchgear", "Circuit Breakers", "Control Panels"] },
+  { name: "Industrial Machinery", subcategories: ["CNC Machines", "Compressors", "Pumps", "Conveyor Systems", "Boilers", "Production Equipment"] },
+  { name: "Construction Materials", subcategories: ["Steel Beams", "Pipes", "Scaffolding", "Metal Sheets", "Roofing Panels", "Structural Components"] },
+  { name: "Automotive Scrap", subcategories: ["Complete Vehicles", "Engines", "Gearboxes", "Wheels & Rims", "Catalytic Converters", "Batteries"] },
+  { name: "Plastic Scrap", subcategories: ["PET", "HDPE", "LDPE", "PP", "PVC", "ABS", "Mixed Plastic"] },
+  { name: "Paper & Cardboard", subcategories: ["OCC Cardboard", "Newspapers", "Office Paper", "Mixed Paper", "Cartons"] },
+  { name: "Glass Scrap", subcategories: ["Clear Glass", "Green Glass", "Brown Glass", "Mixed Glass"] },
+  { name: "Rubber & Tires", subcategories: ["Used Tires", "Shredded Rubber", "Conveyor Belts", "Industrial Rubber"] },
+  { name: "Wood & Pallets", subcategories: ["Wooden Pallets", "Timber", "Crates", "Wood Waste"] },
+  { name: "Textile Scrap", subcategories: ["Cotton", "Polyester", "Fabric Rolls", "Mixed Textile"] },
+  { name: "Batteries", subcategories: ["Lead Acid", "Lithium-ion", "Nickel-Cadmium", "Industrial Batteries"] },
+  { name: "Industrial Residues", subcategories: ["Slag", "Ash", "Metal Dust", "Mill Scale", "Foundry Sand"] },
+  { name: "Mixed Scrap Lots", subcategories: ["Mixed Metals", "Mixed Industrial Waste", "Warehouse Clearance", "Factory Liquidation"] },
+  { name: "Other Recyclables", subcategories: ["Composite Materials", "Packaging Waste", "Miscellaneous"] },
 ];
 
-export const DIMENSION_OPTIONS = ["(1\u20132 cm)", "(2\u20135 cm)", "(5\u201310 cm)", "(10+ cm)"];
-export const CONDITION_OPTIONS = ["New", "Good Condition", "Used"];
+/* Fixed condition values (Arabic labels are a translation reference only; the UI renders English) */
+export const CONDITION_OPTIONS = ["New", "Like New", "Excellent", "Good", "Fair", "Poor", "Damaged", "Defective", "Refurbished", "Used", "Scrap", "Mixed Condition"];
+
+export const UNIT_OPTIONS = ["mm", "cm", "m", "in", "ft"];
+
+export type ProductDimensions = { length: string; width: string; height: string; unit: string };
 
 export type LibraryProduct = {
   id: string;
   name: string;
-  categoryShort: string; // short label shown in the row subtitle ("Iron")
   category: string;
   subcategory: string;
   detailTitle: string;
   weight: string;
-  color: string;
-  dimensions: string;
+  color: string; // raw color value ("Wooden")
+  dimensions: ProductDimensions;
   condition: string;
   description: string;
   images: string[]; // asset URLs (imported or object URLs from upload)
 };
 
+export function formatDimensions(d: ProductDimensions): string {
+  if (!d.length && !d.width && !d.height) return "-";
+  return `${d.length || "-"} \u00d7 ${d.width || "-"} \u00d7 ${d.height || "-"} ${d.unit}`;
+}
+
 const PRODUCT_DESCRIPTION =
   "High-quality scrap reinforcing iron with various diameters, suitable for recycling and industrial use. It features high durability and is free from large impurities, available in different quantities as needed. Ideal for smelting and remanufacturing plants.";
 
-/* Seed products: 10 in Iron & Steel (matching the Figma default view) + 2 in Metals */
+/* Seed products spread across a representative set of categories so filtering stays observable */
 export function buildInitialProducts(defaultImages: string[]): LibraryProduct[] {
-  const ironSubs = PRODUCT_CATEGORIES[0].subcategories;
-  const products: LibraryProduct[] = [];
-  for (let i = 0; i < 10; i++) {
-    products.push({
-      id: `p${i + 1}`,
-      name: "Copper Cables Bundle",
-      categoryShort: "Iron",
-      category: "Iron & Steel",
-      subcategory: ironSubs[i % ironSubs.length],
-      detailTitle: "Iron Scrap - 500 kg",
-      weight: "15 tons",
-      color: "Color: Wooden",
-      dimensions: "Dimensions: 1 to 2 cm\u00b3",
-      condition: "Good Condition",
-      description: PRODUCT_DESCRIPTION,
-      images: defaultImages,
-    });
-  }
-  products.push(
-    { id: "p11", name: "Copper Wire Coils", categoryShort: "Metals", category: "Metals", subcategory: "Copper", detailTitle: "Copper Wire - 200 kg", weight: "8 tons", color: "Color: Copper", dimensions: "Dimensions: 1 to 2 cm\u00b3", condition: "Good Condition", description: PRODUCT_DESCRIPTION, images: defaultImages },
-    { id: "p12", name: "Aluminum Sheets Pack", categoryShort: "Metals", category: "Metals", subcategory: "Aluminum", detailTitle: "Aluminum Sheets - 300 kg", weight: "5 tons", color: "Color: Silver", dimensions: "Dimensions: 2 to 5 cm\u00b3", condition: "New", description: PRODUCT_DESCRIPTION, images: defaultImages },
-  );
-  return products;
+  const seed: [string, string, string][] = [
+    // [name, category, subcategory]
+    ["Rebar Scrap Bundle", "Ferrous Metals", "Rebar"],
+    ["Steel Sheets Pack", "Ferrous Metals", "Steel Sheets"],
+    ["Cast Iron Lot", "Ferrous Metals", "Cast Iron"],
+    ["Structural Steel Beams", "Ferrous Metals", "Structural Steel"],
+    ["HMS 1 Bulk Lot", "Ferrous Metals", "Heavy Melting Steel (HMS 1)"],
+    ["Stainless Steel Offcuts", "Ferrous Metals", "Stainless Steel"],
+    ["Copper Cables Bundle", "Cables & Wires", "Copper Cable"],
+    ["Insulated Wire Coils", "Cables & Wires", "Insulated Wire"],
+    ["Copper Wire Coils", "Non-Ferrous Metals", "Copper"],
+    ["Aluminum Sheets Pack", "Non-Ferrous Metals", "Aluminum"],
+    ["Retired Laptops (Batch 243)", "Electronic Scrap (E-Waste)", "Laptops"],
+    ["Server PCB Boards", "Electronic Scrap (E-Waste)", "PCBs"],
+    ["PET Bottle Bales", "Plastic Scrap", "PET"],
+    ["HDPE Drums Lot", "Plastic Scrap", "HDPE"],
+    ["Lead Acid Battery Lot", "Batteries", "Lead Acid"],
+    ["OCC Cardboard Bales", "Paper & Cardboard", "OCC Cardboard"],
+  ];
+  return seed.map(([name, category, subcategory], i) => ({
+    id: `p${i + 1}`,
+    name,
+    category,
+    subcategory,
+    detailTitle: "Iron Scrap - 500 kg",
+    weight: "15 tons",
+    color: "Wooden",
+    dimensions: { length: "120", width: "80", height: "60", unit: "cm" },
+    condition: "Good",
+    description: PRODUCT_DESCRIPTION,
+    images: defaultImages,
+  }));
 }

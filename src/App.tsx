@@ -31,6 +31,7 @@ type ModalState =
   | { kind: "addMoney"; row: LedgerRow | null }
   | { kind: "addWaste"; row: LedgerRow | null }
   | { kind: "addItem" }
+  | { kind: "editItem"; product: LibraryProduct }
   | null;
 
 const DEFAULT_PRODUCT_IMAGES = [productPhoto, modalPhoto, productPhoto];
@@ -60,13 +61,12 @@ export default function App() {
     const product: LibraryProduct = {
       id: uid(),
       name: item.name,
-      categoryShort: item.category === "Iron & Steel" ? "Iron" : item.category,
       category: item.category,
       subcategory: item.subcategory,
       detailTitle: item.name,
       weight: "-",
-      color: item.color ? `Color: ${item.color}` : "Color: -",
-      dimensions: item.dimensions ? `Dimensions: ${item.dimensions}` : "Dimensions: -",
+      color: item.color,
+      dimensions: item.dimensions,
       condition: item.condition || "-",
       description: item.description,
       images: item.images.length > 0 ? item.images : DEFAULT_PRODUCT_IMAGES,
@@ -74,6 +74,33 @@ export default function App() {
     setProducts((p) => [product, ...p]);
     close();
   };
+
+  /* Edit Product — updates the existing library entry in place */
+  const submitEditItem = (item: NewItemSubmission) => {
+    if (modal?.kind !== "editItem") return;
+    const id = modal.product.id;
+    setProducts((list) =>
+      list.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              name: item.name,
+              category: item.category,
+              subcategory: item.subcategory,
+              detailTitle: item.name,
+              color: item.color,
+              dimensions: item.dimensions,
+              condition: item.condition || "-",
+              description: item.description,
+              images: item.images.length > 0 ? item.images : p.images,
+            }
+          : p,
+      ),
+    );
+    close();
+  };
+
+  const deleteProduct = (id: string) => setProducts((list) => list.filter((p) => p.id !== id));
 
   /* Screen 3 — new quantity transaction: one ledger row per delivered product */
   const submitNewWaste = (s: WasteSubmission) => {
@@ -162,7 +189,13 @@ export default function App() {
   return (
     <>
       {page === "productLibrary" ? (
-        <ProductLibrary products={products} onNavigate={navigate} onAddNewItem={() => setModal({ kind: "addItem" })} />
+        <ProductLibrary
+          products={products}
+          onNavigate={navigate}
+          onAddNewItem={() => setModal({ kind: "addItem" })}
+          onEditProduct={(product) => setModal({ kind: "editItem", product })}
+          onDeleteProduct={deleteProduct}
+        />
       ) : detailRow ? (
         <WasteTransactions
           payments={payments}
@@ -194,6 +227,7 @@ export default function App() {
         <AddWasteToTransaction buyer={modal.row?.buyer ?? "Buyer #7"} bidId="BID-2041" onClose={close} onSubmit={submitAddWaste} />
       )}
       {modal?.kind === "addItem" && <AddNewItem onClose={close} onSubmit={submitNewItem} />}
+      {modal?.kind === "editItem" && <AddNewItem onClose={close} onSubmit={submitEditItem} initial={modal.product} />}
     </>
   );
 }
