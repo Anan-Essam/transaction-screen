@@ -9,8 +9,9 @@ import {
   SettingsIcon,
 } from "./icons";
 import { ProductLibraryIconWhite, TransactionIconDark } from "./icons3";
+import { DashboardIconWhite } from "./icons4";
 
-export type SideBarPage = "productLibrary" | "transaction";
+export type SideBarPage = "dashboard" | "productLibrary" | "transaction";
 
 type SideBarItemProps = {
   icon: React.ReactNode;
@@ -77,13 +78,11 @@ export default function SideBar({ className, active = "transaction", onNavigate 
     <div className={className || "lg:h-[940px] relative w-full lg:w-[200px]"} data-name="Side Bar">
       <div className="relative lg:absolute bg-white lg:inset-[0.34%_0.25%_0_0] overflow-clip rounded-[24px]">
         <div className="relative lg:absolute content-stretch flex flex-col gap-[20px] items-end justify-center lg:left-0 py-[29px] lg:py-0 lg:top-[29px] w-full lg:w-[200px]">
-          <SideBarItem
-            icon={<DashboardIcon />}
-            label="Dashboard"
-            onClick={() => {
-              /* navigate to Dashboard */
-            }}
-          />
+          {active === "dashboard" ? (
+            <ActiveSideBarItem icon={<DashboardIconWhite />} label="Dashboard" onClick={() => go("dashboard")} />
+          ) : (
+            <SideBarItem icon={<DashboardIcon />} label="Dashboard" onClick={() => go("dashboard")} />
+          )}
           <SideBarItem
             icon={<MyAuctionsIcon />}
             label="My Auctions"
@@ -118,7 +117,7 @@ export default function SideBar({ className, active = "transaction", onNavigate 
         </div>
       </div>
       <div
-        className={`absolute hidden lg:flex ${active === "productLibrary" ? "inset-[15.47%_0.25%_70.77%_99.75%]" : "inset-[22.87%_0.25%_63.37%_99.75%]"} items-center justify-center`}
+        className={`absolute hidden lg:flex ${active === "dashboard" ? "inset-[2.54%_0.25%_86.34%_99.75%]" : active === "productLibrary" ? "inset-[15.47%_0.25%_70.77%_99.75%]" : "inset-[22.87%_0.25%_63.37%_99.75%]"} items-center justify-center`}
         style={{ containerType: "size" }}
       >
         <div className="-rotate-90 flex-none h-[0px] w-[100cqh]">

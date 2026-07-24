@@ -2,6 +2,7 @@ import { useState } from "react";
 import MoneyTransactions from "./MoneyTransactions";
 import WasteTransactions from "./TransactionDetail";
 import ProductLibrary from "./ProductLibrary";
+import Homepage from "./Dashboard";
 import AddNewItem from "./components/modals/AddNewItem";
 import productPhoto from "./assets/figma/productPhoto.jpg";
 import modalPhoto from "./assets/figma/modalPhoto.jpg";
@@ -188,7 +189,9 @@ export default function App() {
 
   return (
     <>
-      {page === "productLibrary" ? (
+      {page === "dashboard" ? (
+        <Homepage onNavigate={navigate} />
+      ) : page === "productLibrary" ? (
         <ProductLibrary
           products={products}
           onNavigate={navigate}
