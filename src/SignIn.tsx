@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import authBg from "./assets/figma/authBg.jpg";
 import authLogo from "./assets/figma/authLogo.svg";
@@ -22,21 +22,44 @@ export function lookupPhone(phone: string): PhoneState {
 
 /* ---------- shared pieces ---------- */
 
-/* Full-bleed scrapyard photo + 40% black overlay + centered white card.
-   Card geometry synced to the updated "Sign in 1" frame: 481px wide, 514px tall,
-   pt-24 / pb-20 / px-20. Taller screens keep the old frames' extra content room,
-   adjusted by exactly the header shrink and padding delta (614 - 20 + 4 = 598). */
-function AuthShell({ children, tall }: { children: ReactNode; tall?: boolean }) {
+/* The white card: hugs its content, shares a min-height across screens (from the
+   shortest screen's 514px frame) and animates height changes between screens.
+   The card element itself stays mounted across steps so the transition can run. */
+function AuthCard({ children }: { children: ReactNode }) {
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number>();
+
+  useLayoutEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+    const measure = () => setHeight(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div
+      className="bg-white border border-[#f5f5f5] border-solid overflow-hidden rounded-[24px] w-full max-w-[481px] transition-[height] duration-300 ease-in-out"
+      style={height !== undefined ? { height: height + 2 } : undefined}
+    >
+      <div ref={innerRef} className="flex flex-col gap-[40px] items-center justify-between md:min-h-[514px] pb-[20px] pt-[24px] px-[20px] w-full">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* Full-bleed scrapyard photo + 40% black overlay + centered card (481px wide,
+   pt-24 / pb-20 / px-20, per the updated "Sign in 1" frame) */
+function AuthShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative min-h-screen w-full" data-name="Sign in">
       <img alt="" className="fixed inset-0 max-w-none object-cover size-full" src={authBg} />
       <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)]" />
       <div className="relative flex items-center justify-center min-h-screen p-[16px] sm:p-[24px]">
-        <div
-          className={`bg-white border border-[#f5f5f5] border-solid flex flex-col gap-[40px] items-center justify-between pb-[20px] pt-[24px] px-[20px] rounded-[24px] w-full max-w-[481px] ${tall ? "md:h-[598px]" : "md:h-[514px]"} md:gap-0`}
-        >
-          {children}
-        </div>
+        <AuthCard>{children}</AuthCard>
       </div>
     </div>
   );
@@ -286,10 +309,10 @@ function UnregisteredBanner() {
   return (
     <div
       role="alert"
-      className="bg-[rgba(218,20,20,0.04)] border border-[rgba(218,20,20,0.4)] border-solid flex items-center justify-center p-[8px] relative rounded-[8px] shrink-0 w-full"
+      className="bg-[rgba(218,20,20,0.04)] border border-[rgba(218,20,20,0.4)] border-solid flex items-center justify-center p-[12px] relative rounded-[8px] shrink-0 w-full"
     >
-      <div className="flex flex-1 gap-[8px] items-start min-w-0 relative">
-        <div className="h-[23.733px] relative shrink-0 w-[22.5px]" data-name="m028t0154_i_icon_18sep22 1">
+      <div className="flex flex-1 gap-[8px] h-[16px] items-center min-w-0 relative">
+        <div className="h-[16px] relative shrink-0 w-[15.169px]" data-name="m028t0154_i_icon_18sep22 1">
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <img alt="" className="absolute h-[176.06%] left-[-42.39%] max-w-none top-[-42.03%] w-[185.7%]" src={authWarn} />
           </div>
@@ -363,11 +386,10 @@ function SignIn1({ onSubmit }: { onSubmit: (phone: string) => boolean }) {
   };
 
   return (
-    <AuthShell>
-      <form onSubmit={submit} className="contents" data-name={showError ? "Sign in 3" : "Sign in 1"}>
+    <form onSubmit={submit} className="contents" data-name={showError ? "Sign in 3" : "Sign in 1"}>
         <div className="flex flex-col gap-[40px] md:gap-[64px] items-center relative shrink-0 w-full">
           <AuthHeader title="Verify Your Phone Number" subtitle="Enter your registered phone number to continue." />
-          <div className="flex flex-col gap-[40px] items-start relative shrink-0 w-full">
+          <div className="flex flex-col gap-[24px] items-start relative shrink-0 w-full">
             {showError && <UnregisteredBanner />}
             <div className="flex flex-col items-start justify-center relative shrink-0 w-full">
               <PhoneNumberField
@@ -384,8 +406,7 @@ function SignIn1({ onSubmit }: { onSubmit: (phone: string) => boolean }) {
         <div className="flex flex-col items-center relative shrink-0 w-full">
           <PrimaryButton label="Phone Number Verification" dimmed={showError} />
         </div>
-      </form>
-    </AuthShell>
+    </form>
   );
 }
 
@@ -400,8 +421,7 @@ function SignIn4({ onVerify, onBack }: { onVerify: () => void; onBack: () => voi
   };
 
   return (
-    <AuthShell tall>
-      <form onSubmit={submit} className="contents" data-name="Sign in 4">
+    <form onSubmit={submit} className="contents" data-name="Sign in 4">
         <div className="flex flex-col gap-[40px] md:gap-[64px] items-center relative shrink-0 w-full">
           <AuthHeader
             title="Enter the verification code"
@@ -428,8 +448,7 @@ function SignIn4({ onVerify, onBack }: { onVerify: () => void; onBack: () => voi
           <PrimaryButton label="Verify Code" />
           <BackToLogin onClick={onBack} />
         </div>
-      </form>
-    </AuthShell>
+    </form>
   );
 }
 
@@ -456,13 +475,12 @@ function SignIn2({
   };
 
   return (
-    <AuthShell tall>
-      <form onSubmit={submit} className="contents" data-name="Sign in 2">
+    <form onSubmit={submit} className="contents" data-name="Sign in 2">
         <div className="flex flex-col gap-[40px] md:gap-[56px] items-center relative shrink-0 w-full">
           <AuthHeader title={title} subtitle="Create a strong new password to keep your account secure." subtitleLeading="leading-[24px]" />
           <div className="flex flex-col items-start justify-center relative shrink-0 w-full">
             <div className="flex flex-col gap-[16px] items-start relative shrink-0 w-full">
-              <div className="flex flex-col gap-[32px] items-start justify-center relative shrink-0 w-full">
+              <div className="flex flex-col gap-[24px] items-start justify-center relative shrink-0 w-full">
                 <PasswordField label="New Password" placeholder="Enter your Password" value={password} onChange={setPassword} autoFocus />
                 <PasswordField label="Confirm New Password" placeholder="Enter your Password" value={confirm} onChange={setConfirm} />
               </div>
@@ -476,8 +494,7 @@ function SignIn2({
             <BackToLogin onClick={onBack} />
           </div>
         </div>
-      </form>
-    </AuthShell>
+    </form>
   );
 }
 
@@ -503,11 +520,10 @@ function SignIn8({
   };
 
   return (
-    <AuthShell tall>
-      <form onSubmit={submit} className="contents" data-name="Sign in 8">
+    <form onSubmit={submit} className="contents" data-name="Sign in 8">
         <div className="flex flex-col gap-[40px] md:gap-[64px] items-center relative shrink-0 w-full">
           <AuthHeader title="Welcome Back" subtitle="Enter your password to access your account." />
-          <div className="flex flex-col gap-[40px] items-start justify-center relative shrink-0 w-full">
+          <div className="flex flex-col gap-[24px] items-start justify-center relative shrink-0 w-full">
             <PhoneNumberField value={phoneValue} onChange={setPhoneValue} />
             <div className="flex flex-col gap-[16px] items-start relative shrink-0 w-full">
               <PasswordField
@@ -536,8 +552,7 @@ function SignIn8({
             <BackToLogin onClick={onBack} />
           </div>
         </div>
-      </form>
-    </AuthShell>
+    </form>
   );
 }
 
@@ -551,8 +566,7 @@ function SignIn5({ onSubmit, onBack }: { onSubmit: (phone: string) => void; onBa
   };
 
   return (
-    <AuthShell>
-      <form onSubmit={submit} className="contents" data-name="Sign in 5">
+    <form onSubmit={submit} className="contents" data-name="Sign in 5">
         <div className="flex flex-col gap-[40px] md:gap-[64px] items-center relative shrink-0 w-full">
           <AuthHeader title="Forgot your password" subtitle="Enter your registered email to receive reset instructions" subtitleLeading="leading-[24px]" />
           <div className="flex flex-col items-start justify-center relative shrink-0 w-full">
@@ -565,8 +579,7 @@ function SignIn5({ onSubmit, onBack }: { onSubmit: (phone: string) => void; onBa
             <BackToLogin onClick={onBack} />
           </div>
         </div>
-      </form>
-    </AuthShell>
+    </form>
   );
 }
 
@@ -593,21 +606,31 @@ export default function AuthFlow({ onLogin }: { onLogin: () => void }) {
     return kind === "unregistered";
   };
 
+  /* All steps render inside ONE persistent shell so the card can animate its height between screens */
+  let screen: ReactNode;
   switch (state.step) {
     case "phone":
-      return <SignIn1 onSubmit={submitPhone} />;
+      screen = <SignIn1 onSubmit={submitPhone} />;
+      break;
     case "otp":
-      return <SignIn4 onVerify={() => setState({ step: "setPassword", phone: state.phone })} onBack={toLogin} />;
+      screen = <SignIn4 onVerify={() => setState({ step: "setPassword", phone: state.phone })} onBack={toLogin} />;
+      break;
     case "setPassword":
-      return <SignIn2 title="Set your password" showRememberMe onSubmit={() => onLogin()} onBack={toLogin} />;
+      screen = <SignIn2 title="Set your password" showRememberMe onSubmit={() => onLogin()} onBack={toLogin} />;
+      break;
     case "password":
-      return <SignIn8 phone={state.phone} onLogin={() => onLogin()} onForgot={() => setState({ step: "forgotPhone" })} onBack={toLogin} />;
+      screen = <SignIn8 phone={state.phone} onLogin={() => onLogin()} onForgot={() => setState({ step: "forgotPhone" })} onBack={toLogin} />;
+      break;
     case "forgotPhone":
-      return <SignIn5 onSubmit={(phone) => setState({ step: "forgotOtp", phone })} onBack={toLogin} />;
+      screen = <SignIn5 onSubmit={(phone) => setState({ step: "forgotOtp", phone })} onBack={toLogin} />;
+      break;
     case "forgotOtp":
-      return <SignIn4 onVerify={() => setState({ step: "forgotReset", phone: state.phone })} onBack={toLogin} />;
+      screen = <SignIn4 onVerify={() => setState({ step: "forgotReset", phone: state.phone })} onBack={toLogin} />;
+      break;
     case "forgotReset":
       /* reset does NOT auto-login — back to phone entry so the user logs in fresh */
-      return <SignIn2 title="Reset your password" showRememberMe={false} onSubmit={toLogin} onBack={toLogin} />;
+      screen = <SignIn2 title="Reset your password" showRememberMe={false} onSubmit={toLogin} onBack={toLogin} />;
+      break;
   }
+  return <AuthShell>{screen}</AuthShell>;
 }
