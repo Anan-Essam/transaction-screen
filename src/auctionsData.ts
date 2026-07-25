@@ -36,7 +36,7 @@ export type Bid = {
   placedAt: string;
 };
 
-export type AuctionStatus = "active" | "ready" | "completed" | "cancelled";
+export type AuctionStatus = "active" | "ready" | "completed" | "cancelled" | "draft";
 
 export type Auction = {
   id: string;
@@ -62,6 +62,8 @@ export type Auction = {
   products: AuctionProduct[];
   bidders: AuctionBidder[];
   bids: Bid[];
+  /* Winners already settled on this auction when the app boots (Winners State) */
+  seedAccepted?: { bidId: string; qtyTons: number }[];
 };
 
 export const AUCTION_SITES = [
@@ -72,7 +74,7 @@ export const AUCTION_SITES = [
   "Dell Jeddah Facility",
 ];
 
-export const AUCTION_CATEGORIES = ["Copper", "Stainless Steel", "Batteries", "Electronics", "Steel & Iron", "Plastic"];
+export const AUCTION_CATEGORIES = ["Copper", "Stainless Steel", "Batteries", "Electronics", "Steel & Iron", "Plastic", "Cables & Wires"];
 
 /* ---------- KYC document sets (varied so verification logic is observable) ---------- */
 
@@ -306,6 +308,11 @@ export const INITIAL_AUCTIONS: Auction[] = [
     products: a4Products,
     bidders: a4Bidders,
     bids: a4Bids,
+    /* every product awarded — opens directly in the Winners State */
+    seedAccepted: [
+      { bidId: "b1", qtyTons: 6 },
+      { bidId: "b3", qtyTons: 2.5 },
+    ],
   },
   {
     id: "#AUC-4410",
@@ -331,6 +338,61 @@ export const INITIAL_AUCTIONS: Auction[] = [
     products: a5Products,
     bidders: a5Bidders,
     bids: a5Bids,
+  },
+  {
+    id: "#AUC-4402",
+    name: "Warehouse Clearance Lot",
+    site: "Dell Cairo Recycling Hub",
+    category: "Stainless Steel",
+    status: "active",
+    createdAt: base + 12 * day,
+    startedLabel: "Started: Dec 12, 2024 09:30 AM",
+    startDate: "Jan 12,2025",
+    startTime: "09:30 AM",
+    endDate: "Jan 12,2025",
+    endTime: "09:30 PM",
+    timeRemaining: "3 days, 2 hours",
+    detailTimeRemaining: "3d 2h 14m",
+    timeProgress: 0.08,
+    description:
+      "Mixed stainless offcuts and shelving from a warehouse clearance. Freshly listed — no offers have been submitted yet.",
+    location: "Dell Cairo Recycling Hub",
+    image: aucCardPhoto,
+    gallery: IMAGES,
+    extraImages: 3,
+    biddersDelta: 0,
+    products: [
+      { id: "p1", name: "Stainless Shelving Units", category: "Stainless Steel", qtyUnits: 1800, pricePerUnit: 2.4, image: aucCardPhoto },
+      { id: "p2", name: "Stainless Offcut Bundles", category: "Stainless Steel", qtyUnits: 3400, pricePerUnit: 1.7, image: auction2 },
+    ],
+    /* no bidder activity at all — opens in the Empty State */
+    bidders: [],
+    bids: [],
+  },
+  {
+    id: "#AUC-4395",
+    name: "Cable Drum Lot (Draft)",
+    site: "Dell Frankfurt Hub",
+    category: "Cables & Wires",
+    status: "draft",
+    createdAt: base + 1 * day,
+    startedLabel: "Not started yet",
+    startDate: "—",
+    startTime: "—",
+    endDate: "—",
+    endTime: "—",
+    timeRemaining: "0 hours",
+    detailTimeRemaining: "0h 0m",
+    timeProgress: 1,
+    description: "Draft listing for a cable drum lot. Still being prepared and not yet published to buyers.",
+    location: "Dell Frankfurt Hub",
+    image: modalPhoto,
+    gallery: IMAGES,
+    extraImages: 2,
+    biddersDelta: 0,
+    products: [{ id: "p1", name: "Empty Cable Drums", category: "Cables & Wires", qtyUnits: 640, pricePerUnit: 0.9, image: modalPhoto }],
+    bidders: [],
+    bids: [],
   },
 ];
 

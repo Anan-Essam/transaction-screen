@@ -66,7 +66,9 @@ export default function App() {
   const [products, setProducts] = useState<LibraryProduct[]>(() => buildInitialProducts(DEFAULT_PRODUCT_IMAGES));
   const [auctions, setAuctions] = useState<Auction[]>(INITIAL_AUCTIONS);
   const [auctionId, setAuctionId] = useState<string | null>(null);
-  const [acceptedMap, setAcceptedMap] = useState<Record<string, AcceptedBid[]>>({});
+  const [acceptedMap, setAcceptedMap] = useState<Record<string, AcceptedBid[]>>(() =>
+    Object.fromEntries(INITIAL_AUCTIONS.filter((a) => a.seedAccepted?.length).map((a) => [a.id, a.seedAccepted!])),
+  );
   const [declinedMap, setDeclinedMap] = useState<Record<string, string[]>>({});
   const [auctionModal, setAuctionModal] = useState<AuctionModalState>(null);
 

@@ -33,6 +33,7 @@ import {
   AucLocationIcon,
   AucClockIcon,
   AUCTION_GREEN,
+  AUCTION_BLUE,
   ProductCardFrame,
   BuyerCardFrame as ProductCardFrameBuyer,
   AucAwardCoin,
@@ -242,9 +243,9 @@ function ProductCardSmall({
       data-name="Product Card"
     >
       <ProductCardFrame selected={selected} />
-      {/* arrow/up left — sits in the frame's notch at the bottom-right */}
+      {/* arrow/up left — sits in the frame's notch; green on the active card, blue otherwise */}
       <div className="absolute right-[-0.02px] top-[111.7px]">
-        <AucArrowCircle size={24.413} color={AUCTION_GREEN} iconSize={5.287} />
+        <AucArrowCircle size={24.413} color={selected ? AUCTION_GREEN : AUCTION_BLUE} iconSize={5.287} />
       </div>
       <div className="absolute flex flex-col gap-[4.74px] items-start justify-center left-[6.56px] top-[6px] w-[172px]">
         <div className="h-[57px] overflow-clip relative rounded-tl-[12px] rounded-tr-[12px] shrink-0 w-full">
@@ -305,7 +306,7 @@ function BuyerCardSmall({
       <ProductCardFrameBuyer selected={selected} />
       <button type="button" onClick={onSelect} aria-pressed={selected} className="absolute inset-0 cursor-pointer" aria-label={`Select ${bidder.id}`} />
       <div className="absolute right-[-0.02px] top-[36px] pointer-events-none">
-        <AucArrowCircle size={24.413} color={AUCTION_GREEN} iconSize={5.287} />
+        <AucArrowCircle size={24.413} color={selected ? AUCTION_GREEN : AUCTION_BLUE} iconSize={5.287} />
       </div>
       <div className="absolute flex flex-col gap-[12px] items-start left-[9px] top-[7px] w-[186px] pointer-events-none">
         <div className="flex items-center justify-between relative shrink-0 w-full">
@@ -493,7 +494,7 @@ export default function AuctionDetail({
   const [winnersOpen, setWinnersOpen] = useState(false);
 
   const running = auction.status === "active";
-  const locked = running || auction.status === "cancelled";
+  const locked = running || auction.status === "cancelled" || auction.status === "draft";
   const acceptedBidIds = accepted.map((a) => a.bidId);
   /* Winners state: the auction has been settled with accepted offers */
   const settled = auction.status === "completed";
@@ -531,6 +532,9 @@ export default function AuctionDetail({
   const actionCell = (bid: Bid) =>
     acceptedBidIds.includes(bid.id) ? (
       <AcceptedChip />
+    ) : settled ? (
+      /* Winners State: every product is awarded, so losing bids carry no action */
+      null
     ) : locked ? (
       <AucLockIcon />
     ) : (
