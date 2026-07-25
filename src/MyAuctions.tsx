@@ -7,7 +7,6 @@ import kpiCash from "./assets/figma/kpiCash.png";
 import kpiBriefcase from "./assets/figma/kpiBriefcase.png";
 import kpiCard from "./assets/figma/kpiCard.png";
 import kpiGavel from "./assets/figma/kpiGavel.png";
-import aucBadgeCash from "./assets/figma/aucBadgeCash.png";
 import {
   AucSearchIcon,
   AucClearIcon,
@@ -25,7 +24,9 @@ import {
   AucMoneyIcon,
   AucJudgmentIcon,
   AucArrowCircle,
+  AucAwardCoin,
 } from "./components/auctionIcons";
+import AuctionEmptyState from "./components/AuctionEmptyState";
 import { AUCTION_SITES, AUCTION_CATEGORIES, auctionTotals, formatAmount } from "./auctionsData";
 import type { Auction } from "./auctionsData";
 
@@ -78,122 +79,139 @@ function Frame36({ label, progress }: { label: string; progress: number }) {
   );
 }
 
-/* "Frame 2085663774" — one auction row card */
+/* "Frame 2085663774" — one auction row card. The white body is notched at the
+   bottom-right (Figma "Rectangle 933") so the blue action button sits in the cut-out. */
 function AuctionCard({ auction, onOpen }: { auction: Auction; onOpen: () => void }) {
   const totals = auctionTotals(auction);
   const running = auction.status === "active";
   return (
-    <div className="bg-white relative rounded-[16px] shrink-0 w-full" data-name="Frame 2085663774">
-      <div className="flex gap-[8px] items-center p-[12px] relative w-full flex-col md:flex-row">
-        <div className="h-[106px] overflow-clip relative rounded-[16px] w-full md:w-[146px] shrink-0">
-          <img alt="" className="absolute max-w-none object-cover rounded-[16px] size-full" src={auction.image} />
-          <div className="absolute bg-gradient-to-b from-[rgba(19,32,67,0)] inset-0 rounded-[16px] to-[99.038%] to-[rgba(19,32,67,0.6)]" />
-          <div
-            className={`absolute ${running ? "bg-[rgba(27,158,116,0.7)]" : "bg-[rgba(102,100,100,0.7)]"} flex gap-[2px] h-[24px] items-center justify-center left-[8.27px] p-[8px] rounded-[24px] top-[8px]`}
-          >
-            <div className="h-[16px] relative shrink-0 w-[15px]">
-              <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={aucBadgeCash} />
-            </div>
-            <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-white whitespace-nowrap">
-              <p className="leading-[normal]">{running ? "active" : "Closed"}</p>
+    <div className="relative shrink-0 w-full" data-name="Frame 2085663774">
+      {/* "Rectangle 933" — white body whose outline steps around the action button.
+         Stretched to the card width (native 1081x130, so only ~2% horizontal scale at lg). */}
+      <svg
+        viewBox="0 0 1081 130"
+        preserveAspectRatio="none"
+        fill="none"
+        aria-hidden="true"
+        className="absolute inset-0 hidden lg:block size-full"
+      >
+        <path
+          d="M28 0.5H1053C1068.19 0.5 1080.5 12.8122 1080.5 28V42.5C1080.5 57.6878 1068.19 70 1053 70H1035.11C1019.37 70 1006.61 82.7599 1006.61 98.5V102C1006.61 117.188 994.302 129.5 979.114 129.5H28C12.8122 129.5 0.5 117.188 0.5 102V28C0.5 12.8122 12.8122 0.500001 28 0.5Z"
+          fill="white"
+          stroke="#F6F6F6"
+        />
+      </svg>
+      <div className="bg-white lg:bg-transparent relative rounded-[28px] w-full" data-name="Rectangle 933 Content">
+        <div className="flex gap-[8px] items-center p-[12px] relative w-full flex-col md:flex-row">
+          <div className="h-[106px] overflow-clip relative rounded-[16px] w-full md:w-[146px] shrink-0">
+            <img alt="" className="absolute max-w-none object-cover rounded-[16px] size-full" src={auction.image} />
+            <div className="absolute bg-gradient-to-b from-[rgba(19,32,67,0)] inset-0 rounded-[16px] to-[99.038%] to-[rgba(19,32,67,0.6)]" />
+            <div
+              className={`absolute ${running ? "bg-[rgba(27,158,116,0.7)]" : "bg-[rgba(102,100,100,0.7)]"} flex gap-[2px] h-[24px] items-center justify-center left-[8.27px] p-[8px] rounded-[24px] top-[8px]`}
+            >
+              <AucAwardCoin size={15} />
+              <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-white whitespace-nowrap">
+                <p className="leading-[normal]">{running ? "active" : "Closed"}</p>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex flex-col gap-[20px] items-start px-[16px] relative flex-1 min-w-0 w-full">
-          <div className="flex flex-wrap gap-[8px] items-start justify-between relative shrink-0 w-full">
-            <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
-              <p className="leading-[24px]">{auction.name}</p>
-            </div>
-            <div className="flex gap-[8px] items-center relative shrink-0">
-              <div className="flex gap-[4px] items-center relative shrink-0">
-                <AucClockIcon />
-                <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] whitespace-nowrap">
-                  <p className="leading-[normal]">Time Remaining:</p>
-                </div>
-              </div>
-              <Frame36 label={auction.timeRemaining} progress={auction.timeProgress} />
-            </div>
-          </div>
-          <div className="content-start flex flex-wrap gap-y-[8px] gap-x-[24px] items-start relative shrink-0 w-full lg:pr-[70px]">
-            <div className="flex gap-[8px] items-center relative shrink-0 w-[115px]">
-              <div className="flex gap-[4px] items-center relative shrink-0">
-                <AucBiddingIcon />
-                <div className="[word-break:break-word] flex flex-col font-cairo font-normal h-[16px] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] w-[50px]">
-                  <p className="leading-[normal]">Bidders:</p>
-                </div>
-              </div>
-              <div className="flex gap-[4px] items-center relative shrink-0 w-[50px]">
-                <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
-                  <p className="leading-[normal]">{auction.bidders.length}</p>
-                </div>
-                <div className="flex items-center relative shrink-0">
-                  <AucBidderUpIcon />
-                  <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[#0cc60c] text-[10px] whitespace-nowrap">
-                    <p className="leading-[normal]">+{auction.biddersDelta}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-[8px] items-center relative shrink-0">
-              <div className="flex gap-[4px] items-center relative shrink-0">
-                <AucProductIcon />
-                <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] whitespace-nowrap">
-                  <p className="leading-[normal]">Products:</p>
-                </div>
-              </div>
+          <div className="flex flex-col gap-[20px] items-start px-[16px] relative flex-1 min-w-0 w-full">
+            <div className="flex flex-wrap gap-[8px] items-start justify-between relative shrink-0 w-full">
               <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
-                <p className="leading-[normal]">{auction.products.length}</p>
+                <p className="leading-[24px]">{auction.name}</p>
               </div>
-            </div>
-            <div className="flex gap-[8.334px] items-center relative shrink-0">
-              <div className="flex gap-[4px] items-center relative shrink-0">
-                <AucLocationIcon />
-                <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] whitespace-nowrap">
-                  <p className="leading-[normal]">Location:</p>
-                </div>
-              </div>
-              <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
-                <p className="leading-[normal]">{auction.location}</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-x-[48px] gap-y-[8px] items-center relative shrink-0 w-full">
-              <div className="flex gap-[8px] items-center relative shrink-0">
+              <div className="flex gap-[8px] items-center relative shrink-0 lg:pr-[80px]">
                 <div className="flex gap-[4px] items-center relative shrink-0">
-                  <AucMoneyIcon />
+                  <AucClockIcon />
                   <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] whitespace-nowrap">
-                    <p className="leading-[normal]">Total Low Bids:</p>
+                    <p className="leading-[normal]">Time Remaining:</p>
                   </div>
                 </div>
-                <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
-                  <p className="leading-[normal]">{formatAmount(totals.low)}</p>
+                <Frame36 label={auction.timeRemaining} progress={auction.timeProgress} />
+              </div>
+            </div>
+            <div className="content-start flex flex-wrap gap-y-[8px] gap-x-[24px] items-start relative shrink-0 w-full lg:pr-[80px]">
+              <div className="flex gap-[8px] items-center relative shrink-0 w-[115px]">
+                <div className="flex gap-[4px] items-center relative shrink-0">
+                  <AucBiddingIcon />
+                  <div className="[word-break:break-word] flex flex-col font-cairo font-normal h-[16px] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] w-[50px]">
+                    <p className="leading-[normal]">Bidders:</p>
+                  </div>
+                </div>
+                <div className="flex gap-[4px] items-center relative shrink-0 w-[50px]">
+                  <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
+                    <p className="leading-[normal]">{auction.bidders.length}</p>
+                  </div>
+                  <div className="flex items-center relative shrink-0">
+                    <AucBidderUpIcon />
+                    <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[#0cc60c] text-[10px] whitespace-nowrap">
+                      <p className="leading-[normal]">+{auction.biddersDelta}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-[8px] items-center relative shrink-0">
                 <div className="flex gap-[4px] items-center relative shrink-0">
-                  <AucJudgmentIcon />
+                  <AucProductIcon />
                   <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] whitespace-nowrap">
-                    <p className="leading-[normal]">Total High Bids:</p>
+                    <p className="leading-[normal]">Products:</p>
                   </div>
                 </div>
                 <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
-                  <p className="leading-[normal]">{formatAmount(totals.high)}</p>
+                  <p className="leading-[normal]">{auction.products.length}</p>
+                </div>
+              </div>
+              <div className="flex gap-[8.334px] items-center relative shrink-0">
+                <div className="flex gap-[4px] items-center relative shrink-0">
+                  <AucLocationIcon />
+                  <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] whitespace-nowrap">
+                    <p className="leading-[normal]">Location:</p>
+                  </div>
+                </div>
+                <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
+                  <p className="leading-[normal]">{auction.location}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-x-[48px] gap-y-[8px] items-center relative shrink-0 w-full">
+                <div className="flex gap-[8px] items-center relative shrink-0">
+                  <div className="flex gap-[4px] items-center relative shrink-0">
+                    <AucMoneyIcon />
+                    <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] whitespace-nowrap">
+                      <p className="leading-[normal]">Total Low Bids:</p>
+                    </div>
+                  </div>
+                  <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
+                    <p className="leading-[normal]">{formatAmount(totals.low)}</p>
+                  </div>
+                </div>
+                <div className="flex gap-[8px] items-center relative shrink-0">
+                  <div className="flex gap-[4px] items-center relative shrink-0">
+                    <AucJudgmentIcon />
+                    <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] whitespace-nowrap">
+                      <p className="leading-[normal]">Total High Bids:</p>
+                    </div>
+                  </div>
+                  <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
+                    <p className="leading-[normal]">{formatAmount(totals.high)}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="absolute right-[16px] top-1/2 -translate-y-1/2 hidden md:block">
-          <AucArrowCircle onClick={onOpen} label={`Open ${auction.name}`} />
-        </div>
-        <button
-          type="button"
-          onClick={onOpen}
-          aria-label={`Open ${auction.name}`}
-          className="md:hidden bg-[#2a459d] rounded-[24px] text-white font-cairo font-bold text-[14px] px-[16px] py-[8px] w-full cursor-pointer"
-        >
-          View Auction
-        </button>
       </div>
+      {/* blue action button seated in the card's notch */}
+      <div className="absolute bottom-[8px] right-[15.5px] hidden lg:block">
+        <AucArrowCircle onClick={onOpen} label={`Open ${auction.name}`} />
+      </div>
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Open ${auction.name}`}
+        className="lg:hidden bg-[#2a459d] rounded-[24px] text-white font-cairo font-bold text-[14px] px-[16px] py-[8px] w-[calc(100%-24px)] mx-[12px] mb-[12px] cursor-pointer"
+      >
+        View Auction
+      </button>
     </div>
   );
 }
@@ -265,6 +283,10 @@ export default function MyAuctions({ auctions, onNavigate, onOpenAuction }: MyAu
   }, [auctions]);
 
   const scrollTabs = (dir: number) => tabsRef.current?.scrollBy({ left: dir * 240, behavior: "smooth" });
+  const anyFilterActive = Boolean(search || appliedFrom || appliedTo || category || site);
+  const createAuction = () => {
+    /* navigate to auction creation */
+  };
 
   return (
     <div className="bg-[#f5f5f5] flex flex-col items-start min-h-screen p-[24px] relative w-full" data-name="Auctions">
@@ -394,9 +416,7 @@ export default function MyAuctions({ auctions, onNavigate, onOpenAuction }: MyAu
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      /* navigate to auction creation */
-                    }}
+                    onClick={createAuction}
                     className="bg-[#1b9e74] flex gap-[4px] h-[40px] items-center justify-center px-[16px] py-[8px] relative rounded-[24px] shrink-0 cursor-pointer"
                     data-name="Create Auction Button Container"
                   >
@@ -545,15 +565,21 @@ export default function MyAuctions({ auctions, onNavigate, onOpenAuction }: MyAu
                   {visible.map((a) => (
                     <AuctionCard key={a.id} auction={a} onOpen={() => onOpenAuction(a)} />
                   ))}
-                  {visible.length === 0 && (
-                    <div className="flex flex-col gap-[8px] items-center justify-center py-[64px] relative shrink-0 w-full">
-                      <div className="size-[80px] relative">
-                        <img alt="" className="absolute block inset-0 max-w-none size-full object-contain" src={kpiGavel} />
-                      </div>
-                      <div className="[word-break:break-word] font-cairo font-bold text-[#131313] text-[20px] text-center">No auctions match your filters</div>
-                      <div className="[word-break:break-word] font-cairo font-normal text-[16px] text-[rgba(19,19,19,0.7)] text-center">Adjust the search, dates, category or site tabs to see more auctions.</div>
-                    </div>
-                  )}
+                  {visible.length === 0 &&
+                    (anyFilterActive ? (
+                      <AuctionEmptyState
+                        title="No auctions match your filters"
+                        body="Adjust the search, date range, category or site tabs to see more auctions."
+                      />
+                    ) : (
+                      <AuctionEmptyState
+                        title="No auctions yet"
+                        body="Create your first auction to start receiving bids from buyers and suppliers."
+                        actionLabel="Create New Auction"
+                        actionIcon={<AucPlusIcon />}
+                        onAction={createAuction}
+                      />
+                    ))}
                 </div>
               </div>
             </div>

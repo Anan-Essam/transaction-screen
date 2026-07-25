@@ -279,6 +279,9 @@ export default function App() {
             onRequestClose={() => setAuctionModal({ kind: "closeAuction", auctionId: currentAuction.id })}
             onDeclineBid={(bidId) => declineBid(currentAuction.id, bidId)}
             onOpenTransaction={() => setModal({ kind: "picker" })}
+            onShare={() => {
+              /* share auction */
+            }}
           />
         ) : (
           <MyAuctions auctions={auctions} onNavigate={navigate} onOpenAuction={(a) => setAuctionId(a.id)} />

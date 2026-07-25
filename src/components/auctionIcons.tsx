@@ -16,7 +16,6 @@ import aucLocG2 from "../assets/figma/aucLocG2.svg";
 import aucLocG3 from "../assets/figma/aucLocG3.svg";
 import aucMoneyLow from "../assets/figma/aucMoneyLow.svg";
 import aucJudgment from "../assets/figma/aucJudgment.svg";
-import aucArrowUpLeft from "../assets/figma/aucArrowUpLeft.svg";
 import aucMedalStar from "../assets/figma/aucMedalStar.svg";
 import aucTagG1 from "../assets/figma/aucTagG1.svg";
 import aucTagG2 from "../assets/figma/aucTagG2.svg";
@@ -39,6 +38,10 @@ import aucLiveStatus from "../assets/figma/aucLiveStatus.svg";
 import aucOverviewIcon from "../assets/figma/aucOverviewIcon.svg";
 import aucKycIcon from "../assets/figma/aucKycIcon.svg";
 import aucVerified from "../assets/figma/aucVerified.png";
+import aucAwardCoin from "../assets/figma/aucAwardCoin.png";
+import aucTrophy from "../assets/figma/aucTrophy.png";
+import aucEmptyGavel from "../assets/figma/aucEmptyGavel.png";
+import aucEmptyShare from "../assets/figma/aucEmptyShare.svg";
 
 /* search_450058 1 — 16px search glass */
 export function AucSearchIcon() {
@@ -246,10 +249,17 @@ export function AucScalesIcon({ size = 8.138 }: { size?: number }) {
   );
 }
 
-/* arrow/up left — round action circle with white arrow */
+/* Exact Figma fills for the circular "go to" action button */
+export const AUCTION_GREEN = "#1b9e74";
+export const AUCTION_BLUE = "#2a459d";
+/* Figma draws the arrow white inside the green circle and #21C18D inside the blue one */
+const ARROW_ON_GREEN = "#ffffff";
+const ARROW_ON_BLUE = "#21c18d";
+
+/* arrow/up left — round action circle (Rectangle notch sits behind it on the cards) */
 export function AucArrowCircle({
   size = 44,
-  color = "#2a459d",
+  color = AUCTION_BLUE,
   iconSize = 11.694,
   onClick,
   label,
@@ -260,13 +270,17 @@ export function AucArrowCircle({
   onClick?: () => void;
   label?: string;
 }) {
+  const stroke = color === AUCTION_GREEN ? ARROW_ON_GREEN : ARROW_ON_BLUE;
   const inner = (
     <div className="flex items-center justify-center overflow-clip rounded-full" style={{ width: size, height: size, backgroundColor: color }} data-name="arrow/up left">
-      <div className="relative shrink-0 -scale-x-100" style={{ width: iconSize, height: iconSize }}>
-        <div className="absolute inset-[-7.06%]">
-          <img alt="" className="block max-w-none size-full" src={aucArrowUpLeft} />
-        </div>
-      </div>
+      <svg width={iconSize} height={iconSize} viewBox="0 0 13.3437 13.3437" fill="none" aria-hidden="true" className="block shrink-0 -scale-x-100">
+        <path
+          d="M12.5187 12.5187L1.66026 1.66026M0.825 10.8481V2.00624C0.825 1.35386 1.35386 0.825 2.00624 0.825H10.8481"
+          stroke={stroke}
+          strokeWidth="1.65"
+          strokeLinecap="round"
+        />
+      </svg>
     </div>
   );
   if (!onClick) return inner;
@@ -274,6 +288,77 @@ export function AucArrowCircle({
     <button type="button" onClick={onClick} aria-label={label} className="cursor-pointer shrink-0">
       {inner}
     </button>
+  );
+}
+
+/* "Rectangle 932" — product card frame: white body, notched bottom-right corner for the
+   action button, mirrored horizontally exactly as the Figma instance renders. 183 x 139.462 */
+export function ProductCardFrame({ selected }: { selected: boolean }) {
+  return (
+    <svg viewBox="0 0 183 139.462" width="183" height="139.462" fill="none" aria-hidden="true" className="absolute inset-0 block size-full">
+      <g transform="scale(-1 1) translate(-183 0)">
+        <path
+          d="M16.0996 0.295898H161.667C173.285 0.296069 182.704 9.71479 182.704 21.333V118.129C182.704 129.747 173.285 139.166 161.667 139.166H40.2109C36.9737 139.166 34.4808 137.363 32.7734 134.701C31.0628 132.035 30.159 128.529 30.1162 125.209C30.0793 122.349 29.7812 119.959 29.0312 117.745C28.2805 115.529 27.0817 113.503 25.2627 111.365C23.8384 109.691 22.5353 108.408 21.0547 107.43C19.571 106.45 17.9221 105.785 15.8164 105.33C14.3506 105.014 12.6226 104.94 10.877 104.911C9.11977 104.882 7.34727 104.9 5.74902 104.773C4.14674 104.646 2.77303 104.377 1.80566 103.806C1.32738 103.523 0.953512 103.171 0.698242 102.728C0.443041 102.285 0.295901 101.734 0.295898 101.044V16.0996C0.296158 7.37175 7.37175 0.296161 16.0996 0.295898Z"
+          fill="white"
+          stroke={selected ? AUCTION_GREEN : "#f0f0f0"}
+          strokeWidth="0.592446"
+        />
+      </g>
+    </svg>
+  );
+}
+
+/* "Rectangle 932" — buyer card frame, same notch treatment. 202 x 61 */
+export function BuyerCardFrame({ selected }: { selected: boolean }) {
+  return (
+    <svg viewBox="0 0 202 61" width="202" height="61" fill="none" aria-hidden="true" className="absolute inset-0 block size-full">
+      <g transform="scale(-1 1) translate(-202 0)">
+        <path
+          d="M8.74219 0.295898H186C194.673 0.2959 201.704 7.32704 201.704 16V45C201.704 53.673 194.673 60.7041 186 60.7041H38.2539C37.1626 60.7041 36.3479 60.4294 35.7256 59.9687C35.1002 59.5057 34.6436 58.8356 34.3027 58.0059C33.6147 56.3311 33.4264 54.089 33.2109 51.793C32.9468 48.9781 32.6174 46.6088 31.8477 44.4121C31.0755 42.2087 29.8641 40.1903 27.8516 38.0635C26.2792 36.4018 24.8418 35.1296 23.2109 34.1611C21.578 33.1916 19.7644 32.5341 17.4463 32.084C15.8175 31.7678 13.9075 31.6428 11.9795 31.5303C10.0428 31.4173 8.08568 31.3163 6.33008 31.0518C4.56997 30.7865 3.05303 30.3618 1.98145 29.626C0.93032 28.9041 0.29595 27.8771 0.295898 26.3428V8.74219C0.295898 4.07782 4.07782 0.295898 8.74219 0.295898Z"
+          fill="white"
+          stroke={selected ? AUCTION_GREEN : "#f0f0f0"}
+          strokeWidth="0.592446"
+        />
+      </g>
+    </svg>
+  );
+}
+
+/* Gold coin used inside the green "Awarded" badge */
+export function AucAwardCoin({ size = 10 }: { size?: number }) {
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }} data-name="Object">
+      <img alt="" className="absolute inset-0 max-w-none object-contain size-full" src={aucAwardCoin} />
+    </div>
+  );
+}
+
+/* Trophy in the Winners-state "Auction completion" bar */
+export function AucTrophyIcon() {
+  return (
+    <div className="h-[15.983px] relative shrink-0 w-[18.571px]" data-name="Object">
+      <img alt="" className="absolute inset-0 max-w-none object-contain size-full" src={aucTrophy} />
+    </div>
+  );
+}
+
+/* Icons/Cards/Summer-2 — gavel illustration used by every auction empty state */
+export function AucEmptyGavel() {
+  return (
+    <div className="h-[64px] relative shrink-0 w-[89.997px]" data-name="Icons/Cards/Summer-2">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <img alt="" className="absolute h-[168.91%] left-[-8.52%] max-w-none top-[-34.85%] w-[120.12%]" src={aucEmptyGavel} />
+      </div>
+    </div>
+  );
+}
+
+/* Share glyph used on the "No bids received yet" empty-state button */
+export function AucEmptyShareIcon() {
+  return (
+    <div className="h-[16px] relative shrink-0 w-[15px]" data-name="Vector">
+      <img alt="" className="absolute block inset-0 max-w-none size-full" src={aucEmptyShare} />
+    </div>
   );
 }
 

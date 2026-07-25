@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import SideBar from "./components/SideBar";
 import type { SideBarPage } from "./components/SideBar";
 import { UserProfile, TopBar } from "./MoneyTransactions";
-import kpiGavel from "./assets/figma/kpiGavel.png";
 import aucBadgeCash from "./assets/figma/aucBadgeCash.png";
 import aucMap from "./assets/figma/aucMap.jpg";
-import aucAcceptCheck from "./assets/figma/aucAcceptCheck.png";
 import {
   AucSearchIcon,
   AucClearIcon,
@@ -33,7 +32,15 @@ import {
   AucKycHeaderIcon,
   AucLocationIcon,
   AucClockIcon,
+  AUCTION_GREEN,
+  ProductCardFrame,
+  BuyerCardFrame as ProductCardFrameBuyer,
+  AucAwardCoin,
+  AucTrophyIcon,
+  AucEmptyShareIcon,
+  AucPlusIcon,
 } from "./components/auctionIcons";
+import AuctionEmptyState from "./components/AuctionEmptyState";
 import {
   isBidderVerified,
   highestBidFor,
@@ -104,28 +111,41 @@ function AcceptedChip() {
   );
 }
 
-/* Empty state — gavel illustration + title + subtitle (Figma "Frame 175") */
-function EmptyState({ title, subtitle }: { title: string; subtitle?: string }) {
-  return (
-    <div className="flex flex-col gap-[16px] items-center justify-center py-[64px] px-[16px] relative w-full" data-name="Frame 175">
-      <div className="size-[80px] relative">
-        <img alt="" className="absolute block inset-0 max-w-none size-full object-contain" src={kpiGavel} />
-      </div>
-      <div className="flex flex-col gap-[8px] items-center relative max-w-[422px] text-center">
-        <p className="font-cairo font-bold text-[#131313] text-[22px] leading-[normal]">{title}</p>
-        {subtitle && <p className="font-cairo font-normal text-[16px] text-[rgba(19,19,19,0.7)] leading-[24px]">{subtitle}</p>}
-      </div>
-    </div>
-  );
-}
 
-/* KYC Required — document checklist popover */
-function KycPopover({ bidder, onClose }: { bidder: AuctionBidder; onClose: () => void }) {
+
+/* KYC Required — document checklist popover.
+   Rendered in a portal and positioned against the trigger's viewport rect so no
+   scroll container or overflow-clip ancestor can cut it off. */
+function KycPopover({ bidder, anchor, onClose }: { bidder: AuctionBidder; anchor: DOMRect; onClose: () => void }) {
   const sections: ("Basic Documents" | "Additional Documents")[] = ["Basic Documents", "Additional Documents"];
-  return (
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ left: anchor.right - 299, top: anchor.bottom + 8 });
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const { width, height } = el.getBoundingClientRect();
+    const margin = 8;
+    let left = anchor.right - width;
+    let top = anchor.bottom + margin;
+    if (left < margin) left = margin;
+    if (left + width > window.innerWidth - margin) left = window.innerWidth - width - margin;
+    /* flip above the trigger when there is not enough room below */
+    if (top + height > window.innerHeight - margin) top = Math.max(margin, anchor.top - height - margin);
+    setPos({ left, top });
+  }, [anchor]);
+
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden="true" />
-      <div role="dialog" aria-label="KYC Required" className="absolute right-0 top-[24px] z-50 bg-white flex flex-col items-start p-[16px] rounded-[24px] w-[299px] shadow-[0px_8px_24px_0px_rgba(0,0,0,0.12)]" data-name="KYC Popup">
+      <div className="fixed inset-0 z-[100]" onClick={onClose} aria-hidden="true" />
+      <div
+        ref={ref}
+        role="dialog"
+        aria-label="KYC Required"
+        style={{ left: pos.left, top: pos.top }}
+        className="fixed z-[101] bg-white flex flex-col items-start p-[16px] rounded-[24px] w-[299px] shadow-[0px_8px_24px_0px_rgba(0,0,0,0.12)]"
+        data-name="KYC Popup"
+      >
         <div className="flex flex-col gap-[8px] items-center relative w-full">
           <div className="border-[#f5f5f5] border-b border-solid flex items-center justify-between pb-[8px] relative shrink-0 w-full">
             <div className="flex gap-[5px] items-center relative shrink-0">
@@ -164,21 +184,36 @@ function KycPopover({ bidder, onClose }: { bidder: AuctionBidder; onClose: () =>
           ))}
         </div>
       </div>
-    </>
+    </>,
+    document.body,
+  );
+}
+
+/* KYC trigger — captures the icon's viewport rect so the portal can anchor to it */
+function KycInfoTrigger({ bidder, size = 16 }: { bidder: AuctionBidder; size?: number }) {
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const holder = useRef<HTMLSpanElement>(null);
+  return (
+    <span ref={holder} className="inline-flex shrink-0">
+      <AucInfoButton
+        size={size}
+        label={`KYC details for ${bidder.id}`}
+        onClick={() => setAnchor(anchor ? null : (holder.current?.getBoundingClientRect() ?? null))}
+      />
+      {anchor && <KycPopover bidder={bidder} anchor={anchor} onClose={() => setAnchor(null)} />}
+    </span>
   );
 }
 
 /* Bidder id + verified dot + KYC info button */
 function BidderInfoCell({ bidder }: { bidder: AuctionBidder }) {
-  const [open, setOpen] = useState(false);
   return (
     <div className="flex gap-[4px] items-center relative shrink-0" data-name="Bidder Info">
       <span className="font-cairo font-semibold text-[#131313] text-[14px] leading-[normal] w-[75px]">{bidder.id}</span>
       <div className="bg-[#f5f5f5] flex gap-[4px] items-center p-[2px] relative rounded-[20px] shrink-0" data-name="Info Container">
         {isBidderVerified(bidder) && <AucVerifiedObject size={12} />}
-        <AucInfoButton onClick={() => setOpen((o) => !o)} label={`KYC details for ${bidder.id}`} />
+        <KycInfoTrigger bidder={bidder} />
       </div>
-      {open && <KycPopover bidder={bidder} onClose={() => setOpen(false)} />}
     </div>
   );
 }
@@ -203,47 +238,101 @@ function ProductCardSmall({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`bg-white relative rounded-[12px] shrink-0 w-[183px] text-left cursor-pointer border ${selected ? "border-[#1b9e74]" : "border-[#f5f5f5]"} border-solid`}
+      className="relative shrink-0 h-[139.462px] w-[183px] text-left cursor-pointer"
       data-name="Product Card"
     >
-      <div className="flex flex-col gap-[4.74px] p-[6px] relative w-full">
+      <ProductCardFrame selected={selected} />
+      {/* arrow/up left — sits in the frame's notch at the bottom-right */}
+      <div className="absolute right-[-0.02px] top-[111.7px]">
+        <AucArrowCircle size={24.413} color={AUCTION_GREEN} iconSize={5.287} />
+      </div>
+      <div className="absolute flex flex-col gap-[4.74px] items-start justify-center left-[6.56px] top-[6px] w-[172px]">
         <div className="h-[57px] overflow-clip relative rounded-tl-[12px] rounded-tr-[12px] shrink-0 w-full">
           <img alt="" className="absolute max-w-none object-cover rounded-tl-[12px] rounded-tr-[12px] size-full" src={product.image} />
           <div className="absolute bg-gradient-to-b from-[rgba(19,32,67,0)] inset-0 rounded-tl-[12px] rounded-tr-[12px] to-[99.038%] to-[rgba(19,32,67,0.6)]" />
           {awarded && (
-            <div className="absolute bg-[#1b9e74] flex gap-[2px] h-[15.394px] items-center justify-center px-[5px] rounded-[15.118px] right-[4px] top-[4px]">
-              <div className="h-[10px] relative shrink-0 w-[9.92px]">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={aucBadgeCash} />
-              </div>
+            <div className="absolute bg-[#1b9e74] flex gap-[4.198px] h-[15.394px] items-center justify-center left-[4px] p-[5.039px] rounded-[15.118px] top-[4px]">
+              <AucAwardCoin size={10} />
               <span className="font-cairo font-medium text-[9px] text-white leading-[14.417px] whitespace-nowrap">Awarded</span>
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-[8px] items-start justify-center relative w-[145px]">
-          <div className="flex flex-col gap-[2px] items-start relative shrink-0 w-full">
-            <span className="font-cairo font-bold text-[#131313] text-[12px] leading-[16px]">{product.name}</span>
-            <span className="font-cairo font-medium text-[#7c7c7c] text-[8px] leading-[12.207px]">{product.category}</span>
+        <div className="flex flex-col gap-[8px] items-start justify-center relative shrink-0 w-[145px]">
+          <div className="[word-break:break-word] flex flex-col gap-[2px] items-start leading-[0] not-italic relative shrink-0 w-full">
+            <div className="flex flex-col font-cairo font-bold h-[11.256px] justify-center min-w-full relative shrink-0 text-[#131313] text-[12px]">
+              <p className="leading-[30.517px] whitespace-nowrap">{product.name}</p>
+            </div>
+            <div className="flex flex-col font-cairo font-medium justify-center relative shrink-0 text-[#7c7c7c] text-[8px] whitespace-nowrap">
+              <p className="leading-[12.207px]">{product.category}</p>
+            </div>
           </div>
           <div className="content-center flex flex-wrap gap-[4px_8px] items-center relative shrink-0 w-[145px]">
-            <div className="flex gap-[6px] items-center relative shrink-0">
+            <div className="flex gap-[6px] items-start relative shrink-0">
               <AucScalesIcon />
-              <span className="font-cairo font-semibold text-[8px] text-[#4a4a4a] leading-[12.207px]">{product.qtyUnits.toLocaleString("en-US")} unit</span>
+              <span className="font-cairo font-semibold text-[8px] text-[#4a4a4a] leading-[12.207px] whitespace-nowrap">{product.qtyUnits.toLocaleString("en-US")} unit</span>
             </div>
-            <div className="flex gap-[6px] items-center relative shrink-0">
+            <div className="flex gap-[6px] items-start relative shrink-0">
               <AucBiddingIcon size={8} />
-              <span className="font-cairo font-semibold text-[8px] text-[#4a4a4a] leading-[12.207px]">{bidsCount} bidders</span>
+              <span className="font-cairo font-semibold text-[8px] text-[#4a4a4a] leading-[12.207px] whitespace-nowrap">{bidsCount} bidders</span>
             </div>
-            <div className="flex gap-[6px] items-center relative shrink-0">
+            <div className="flex gap-[6px] items-start relative shrink-0">
               <AucJudgmentIcon size={8} />
-              <span className="font-cairo font-semibold text-[8px] text-[#4a4a4a] leading-[12.207px]">{product.pricePerUnit}  EGP/unit</span>
+              <span className="font-cairo font-semibold text-[8px] text-[#4a4a4a] leading-[12.207px] whitespace-pre">{product.pricePerUnit}  EGP/unit</span>
             </div>
           </div>
-        </div>
-        <div className="absolute bottom-[8px] right-[6px]">
-          <AucArrowCircle size={24.413} color="#1b9e74" iconSize={5.287} />
         </div>
       </div>
     </button>
+  );
+}
+
+/* "Product Card" (buyer variant) — 202 x 61 with the same notched frame */
+function BuyerCardSmall({
+  bidder,
+  productCount,
+  total,
+  selected,
+  onSelect,
+}: {
+  bidder: AuctionBidder;
+  productCount: number;
+  total: number;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <div className="relative shrink-0 h-[61px] w-[202px]" data-name="Product Card">
+      <ProductCardFrameBuyer selected={selected} />
+      <button type="button" onClick={onSelect} aria-pressed={selected} className="absolute inset-0 cursor-pointer" aria-label={`Select ${bidder.id}`} />
+      <div className="absolute right-[-0.02px] top-[36px] pointer-events-none">
+        <AucArrowCircle size={24.413} color={AUCTION_GREEN} iconSize={5.287} />
+      </div>
+      <div className="absolute flex flex-col gap-[12px] items-start left-[9px] top-[7px] w-[186px] pointer-events-none">
+        <div className="flex items-center justify-between relative shrink-0 w-full">
+          <div className="flex gap-[4px] items-center relative shrink-0">
+            <span className="font-cairo font-bold text-[#131313] text-[12px] leading-[normal] h-[13px] flex items-center">{bidder.id}</span>
+            <div className="flex gap-[2px] h-[13px] items-center relative shrink-0">
+              <span className="font-cairo font-semibold text-[#28459d] text-[10px] leading-[normal]">{bidder.rating}</span>
+              <AucStarIcon size={10} />
+            </div>
+          </div>
+          <div className="flex gap-[4px] items-center justify-end relative shrink-0 pointer-events-auto">
+            <VerifiedChip bidder={bidder} small />
+            <KycInfoTrigger bidder={bidder} size={14} />
+          </div>
+        </div>
+        <div className="content-center flex flex-wrap gap-[4px_12px] items-center relative shrink-0 w-[146px]">
+          <div className="flex gap-[4px] items-center relative shrink-0">
+            <AucScalesIcon />
+            <span className="font-cairo font-semibold text-[10px] text-[#4a4a4a] leading-[12.207px] whitespace-nowrap">{productCount} products</span>
+          </div>
+          <div className="flex gap-[4px] items-center relative shrink-0">
+            <AucJudgmentIcon size={8} />
+            <span className="font-cairo font-semibold text-[10px] text-[#4a4a4a] leading-[12.207px] whitespace-nowrap">{total.toLocaleString("en-US")} EGP</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -303,7 +392,7 @@ function WinnersPanel({
           ))}
         </div>
         {acceptedBids.length === 0 ? (
-          <EmptyState title="No winners yet" subtitle="Accepted offers will appear here once the auction is ready and you start awarding bids." />
+          <AuctionEmptyState title="No winners yet" body="Accepted offers will appear here once the auction is ready and you start awarding bids." />
         ) : (
           <div className="flex flex-col gap-[12px] w-full">
             {[...byBuyer.entries()].map(([buyerId, rows]) => {
@@ -377,6 +466,7 @@ type AuctionDetailProps = {
   onRequestClose: () => void;
   onDeclineBid: (bidId: string) => void;
   onOpenTransaction: () => void;
+  onShare: () => void;
 };
 
 export default function AuctionDetail({
@@ -389,6 +479,7 @@ export default function AuctionDetail({
   onRequestClose,
   onDeclineBid,
   onOpenTransaction,
+  onShare,
 }: AuctionDetailProps) {
   const [view, setView] = useState<DetailView>("product");
   const [productSearch, setProductSearch] = useState("");
@@ -404,6 +495,13 @@ export default function AuctionDetail({
   const running = auction.status === "active";
   const locked = running || auction.status === "cancelled";
   const acceptedBidIds = accepted.map((a) => a.bidId);
+  /* Winners state: the auction has been settled with accepted offers */
+  const settled = auction.status === "completed";
+  const awardedProductCount = auction.products.filter((p) => auction.bids.some((b) => b.productId === p.id && acceptedBidIds.includes(b.id))).length;
+  const totalAcceptedPrice = accepted.reduce((sum, a) => {
+    const bid = auction.bids.find((b) => b.id === a.bidId);
+    return bid ? sum + Math.round((a.qtyTons / bid.qtyTons) * bid.amount) : sum;
+  }, 0);
 
   const isProductAwarded = (productId: string) => auction.bids.some((b) => b.productId === productId && acceptedBidIds.includes(b.id));
 
@@ -496,15 +594,16 @@ export default function AuctionDetail({
                 aria-label="Awarded offers"
               >
                 <AucMedalStarIcon />
-                <span className="font-cairo font-bold text-[16px] text-white leading-[normal] whitespace-nowrap">
-                  {accepted.length > 0 ? `Awarded ${accepted.length}` : "Awarded"}
-                </span>
+                <span className="font-cairo font-bold text-[16px] text-white leading-[normal] whitespace-nowrap">{settled ? "Accepted" : "Awarded"}</span>
+                {accepted.length > 0 && (
+                  <span className="bg-[rgba(255,255,255,0.24)] flex items-center justify-center min-w-[22px] px-[6px] py-[1px] rounded-[12px] font-cairo font-bold text-[12px] text-white leading-[normal]">
+                    {accepted.length}
+                  </span>
+                )}
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  /* share auction */
-                }}
+                onClick={onShare}
                 aria-label="Share auction"
                 className="bg-white border border-[#f0f0f0] border-solid flex items-center justify-center px-[16px] py-[8px] relative rounded-[24px] shrink-0 size-[40px] cursor-pointer"
                 data-name="Options Icon"
@@ -527,6 +626,50 @@ export default function AuctionDetail({
           {/* Metrics Section: center views + right info column */}
           <div className="flex flex-col xl:flex-row gap-[16px] items-start relative shrink-0 w-full" data-name="Metrics Section">
             <div className="flex flex-col gap-[16px] items-start relative flex-1 min-w-0 w-full" data-name="Metrics Section">
+              {/* Winners state — "Auction completion" bar + Add Transaction (Frame 2085663973) */}
+              {settled && (
+                <div className="flex flex-col md:flex-row gap-[16px] items-stretch md:items-center justify-center relative shrink-0 w-full" data-name="Auction completion">
+                  <div className="bg-white flex flex-1 flex-col items-end min-w-0 p-[12px] relative rounded-[20px]">
+                    <div className="flex flex-col gap-[12px] items-start relative shrink-0 w-full">
+                      <div className="flex items-center justify-between relative shrink-0 w-full">
+                        <div className="flex gap-[8px] items-center relative shrink-0">
+                          <AucTrophyIcon />
+                          <p className="font-cairo font-bold text-[#4a4a4a] text-[14px] leading-[normal] whitespace-nowrap">Auction completion</p>
+                        </div>
+                        <p className="font-cairo font-medium text-[#1b9e74] text-[14px] leading-[normal] text-right whitespace-nowrap">
+                          <span>Product: </span>
+                          <span className="font-bold">
+                            {auction.products.length - awardedProductCount} Product
+                          </span>
+                        </p>
+                      </div>
+                      <div className="h-[4.541px] relative rounded-[2.27px] bg-[#f0f0f0] shrink-0 w-full">
+                        <div
+                          className="absolute h-full left-0 rounded-[2.27px] bg-[#1b9e74]"
+                          style={{ width: `${Math.round((awardedProductCount / Math.max(1, auction.products.length)) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onOpenTransaction}
+                    className="bg-[#1b9e74] flex gap-[4px] h-[40px] items-center justify-center px-[16px] py-[8px] relative rounded-[24px] shrink-0 cursor-pointer"
+                  >
+                    <AucPlusIcon />
+                    <span className="font-cairo font-bold text-[16px] text-white leading-[normal] whitespace-pre">Add  Transaction</span>
+                  </button>
+                </div>
+              )}
+              {auction.status === "cancelled" && (
+                <div className="bg-white flex flex-col items-center gap-[8px] rounded-[24px] p-[24px] w-full" data-name="Auction Cancelled">
+                  <span className="font-cairo font-bold text-[#131313] text-[24px] leading-[normal] text-center">Auction cancelled</span>
+                  <span className="font-cairo font-medium text-[16px] text-[rgba(19,19,19,0.7)] leading-[24px] text-center max-w-[422px]">
+                    This auction was voided — no offers were accepted and all products returned to inventory.
+                  </span>
+                </div>
+              )}
+
               {/* View tabs */}
               <div className="bg-white flex items-center p-[8px] relative rounded-[24px] shrink-0 w-full" data-name="Frame 226">
                 <div className="flex flex-col sm:flex-row gap-[14px] items-stretch sm:items-center relative w-full">
@@ -549,34 +692,6 @@ export default function AuctionDetail({
                   ))}
                 </div>
               </div>
-
-              {/* Completed / cancelled banner */}
-              {auction.status === "completed" && (
-                <div className="bg-white flex flex-col items-center gap-[12px] rounded-[24px] p-[24px] w-full" data-name="Auction Completed">
-                  <div className="size-[48px] relative">
-                    <img alt="" className="absolute block inset-0 max-w-none size-full object-contain" src={aucAcceptCheck} />
-                  </div>
-                  <span className="font-cairo font-bold text-[#131313] text-[22px] leading-[normal] text-center">Auction completed</span>
-                  <span className="font-cairo font-normal text-[16px] text-[rgba(19,19,19,0.7)] leading-[24px] text-center max-w-[422px]">
-                    All offers have been accepted and this auction is settled. Record the money and quantity movements as transactions.
-                  </span>
-                  <button
-                    type="button"
-                    onClick={onOpenTransaction}
-                    className="bg-[#28459d] flex h-[44px] items-center justify-center px-[24px] py-[8px] relative rounded-[24px] cursor-pointer"
-                  >
-                    <span className="font-cairo font-bold text-[16px] text-white leading-[normal]">Transaction</span>
-                  </button>
-                </div>
-              )}
-              {auction.status === "cancelled" && (
-                <div className="bg-white flex flex-col items-center gap-[8px] rounded-[24px] p-[24px] w-full" data-name="Auction Cancelled">
-                  <span className="font-cairo font-bold text-[#131313] text-[22px] leading-[normal] text-center">Auction cancelled</span>
-                  <span className="font-cairo font-normal text-[16px] text-[rgba(19,19,19,0.7)] leading-[24px] text-center max-w-[422px]">
-                    This auction was voided — no offers were accepted and all products returned to inventory.
-                  </span>
-                </div>
-              )}
 
               {/* Bidding Section */}
               <div className="bg-white flex flex-col relative rounded-[24px] shrink-0 w-full" data-name="Bidding Section">
@@ -670,7 +785,7 @@ export default function AuctionDetail({
                                     </div>
                                   </div>
                                   {ranked.length === 0 ? (
-                                    <EmptyState title="No bids on this product yet" subtitle={`It stays in the "No bids" status until a buyer submits an offer for it.`} />
+                                    <AuctionEmptyState title="No bids on this product yet" body={`It stays in the "No bids" status until a buyer submits an offer for it.`} />
                                   ) : (
                                     <div className="flex flex-col relative w-full overflow-x-auto" data-name="Bidding List">
                                       <div className="min-w-[560px]">
@@ -685,7 +800,11 @@ export default function AuctionDetail({
                                         {ranked.map((bid, i) => {
                                           const bidder = bidderById(auction, bid.bidderId)!;
                                           return (
-                                            <div key={bid.id} className="border-b border-[#f5f5f5] border-solid flex items-center justify-between p-[8px] relative w-full min-h-[59px]" data-name="Bid Row">
+                                            <div
+                                              key={bid.id}
+                                              className={`border-b border-[#f5f5f5] border-solid flex items-center justify-between p-[8px] relative w-full min-h-[59px] ${acceptedBidIds.includes(bid.id) ? "bg-[rgba(27,158,116,0.06)]" : ""}`}
+                                              data-name="Bid Row"
+                                            >
                                               <div className="w-[44px]">
                                                 <RankPill rank={i + 1} />
                                               </div>
@@ -709,7 +828,7 @@ export default function AuctionDetail({
                               );
                             })()
                           ) : (
-                            <EmptyState title="No bids on this product yet" subtitle={`It stays in the "No bids" status until a buyer submits an offer for it.`} />
+                            <AuctionEmptyState title="No bids on this product yet" body={`It stays in the "No bids" status until a buyer submits an offer for it.`} />
                           )}
                         </div>
                       </div>
@@ -728,49 +847,28 @@ export default function AuctionDetail({
                         </div>
                       </div>
                       {auction.bidders.length === 0 ? (
-                        <EmptyState title="No bids received yet" subtitle="Share this auction with suppliers and buyers to start collecting offers on your products." />
+                        <AuctionEmptyState
+                          title="No bids received yet"
+                          body="Share this auction with suppliers and buyers to start collecting offers on your products."
+                          actionLabel="Share Auction"
+                          actionIcon={<AucEmptyShareIcon />}
+                          onAction={onShare}
+                        />
                       ) : (
                         <div className="flex flex-col md:flex-row gap-[16px] items-start relative shrink-0 w-full" data-name="Bid Items List">
                           <div className="flex flex-row md:flex-col gap-[8px] items-start relative shrink-0 w-full md:w-[212px] overflow-x-auto md:overflow-x-visible [scrollbar-width:none] pr-[4px]" data-name="Bid Item Container">
                             {auction.bidders.map((b) => {
                               const bids = bidsByBidder(auction, b.id, declined);
                               const total = bids.reduce((s, x) => s + x.amount, 0);
-                              const sel = selectedBidder?.id === b.id;
                               return (
-                                <button
+                                <BuyerCardSmall
                                   key={b.id}
-                                  type="button"
-                                  onClick={() => setSelectedBidderId(b.id)}
-                                  aria-pressed={sel}
-                                  className={`bg-white relative rounded-[12px] shrink-0 w-[202px] text-left cursor-pointer border ${sel ? "border-[#28459d]" : "border-[#f5f5f5]"} border-solid`}
-                                  data-name="Product Card"
-                                >
-                                  <div className="flex flex-col gap-[12px] p-[8px] relative w-full">
-                                    <div className="flex items-center justify-between relative w-full">
-                                      <div className="flex gap-[4px] items-center relative shrink-0">
-                                        <span className="font-cairo font-bold text-[#131313] text-[12px] leading-[normal]">{b.id}</span>
-                                        <div className="flex gap-[2px] items-center relative shrink-0">
-                                          <span className="font-cairo font-semibold text-[#28459d] text-[10px] leading-[normal]">{b.rating}</span>
-                                          <AucStarIcon size={10} />
-                                        </div>
-                                      </div>
-                                      <VerifiedChip bidder={b} small />
-                                    </div>
-                                    <div className="flex items-center justify-between relative w-full">
-                                      <div className="flex gap-[12px] items-center relative shrink-0">
-                                        <div className="flex gap-[4px] items-center relative shrink-0">
-                                          <AucScalesIcon size={8} />
-                                          <span className="font-cairo font-semibold text-[10px] text-[#4a4a4a] leading-[12.207px]">{bids.length} products</span>
-                                        </div>
-                                        <div className="flex gap-[4px] items-center relative shrink-0">
-                                          <AucJudgmentIcon size={8} />
-                                          <span className="font-cairo font-semibold text-[10px] text-[#4a4a4a] leading-[12.207px]">{total.toLocaleString("en-US")} EGP</span>
-                                        </div>
-                                      </div>
-                                      <AucArrowCircle size={24.413} color="#1b9e74" iconSize={5.287} />
-                                    </div>
-                                  </div>
-                                </button>
+                                  bidder={b}
+                                  productCount={bids.length}
+                                  total={total}
+                                  selected={selectedBidder?.id === b.id}
+                                  onSelect={() => setSelectedBidderId(b.id)}
+                                />
                               );
                             })}
                           </div>
@@ -803,7 +901,13 @@ export default function AuctionDetail({
                                       )}
                                     </div>
                                     {bids.length === 0 ? (
-                                      <EmptyState title="No bids received yet" subtitle="Share this auction with suppliers and buyers to start collecting offers on your products." />
+                                      <AuctionEmptyState
+                          title="No bids received yet"
+                          body="Share this auction with suppliers and buyers to start collecting offers on your products."
+                          actionLabel="Share Auction"
+                          actionIcon={<AucEmptyShareIcon />}
+                          onAction={onShare}
+                        />
                                     ) : (
                                       <div className="flex flex-col relative w-full overflow-x-auto">
                                         <div className="min-w-[540px]">
@@ -819,7 +923,10 @@ export default function AuctionDetail({
                                             const rank = ranked.findIndex((r) => r.id === bid.id) + 1;
                                             const highest = highestBidFor(auction, bid.productId, declined);
                                             return (
-                                              <div key={bid.id} className="border-b border-[#f5f5f5] border-solid flex items-center justify-between p-[8px] relative w-full min-h-[59px] bg-[#fbfbfb] rounded-[8px] mb-[4px]">
+                                              <div
+                                                key={bid.id}
+                                                className={`border-b border-[#f5f5f5] border-solid flex items-center justify-between p-[8px] relative w-full min-h-[59px] rounded-[8px] mb-[4px] ${acceptedBidIds.includes(bid.id) ? "bg-[rgba(27,158,116,0.06)]" : "bg-[#fbfbfb]"}`}
+                                              >
                                                 <span className="font-cairo font-semibold text-[#131313] text-[14px] leading-[20px] w-[130px]">{productById(auction, bid.productId)?.name}</span>
                                                 <div className="w-[44px]">
                                                   <RankPill rank={rank} />
@@ -849,9 +956,9 @@ export default function AuctionDetail({
                         <span className="font-cairo font-bold text-[#131313] text-[16px] leading-[normal]">Optimized allocation</span>
                       </div>
                       {!everyProductHasBids || scenarios.length === 0 ? (
-                        <EmptyState
+                        <AuctionEmptyState
                           title="No recommendation available yet"
-                          subtitle="We need at least one bid on every product before an optimized allocation scenario can be calculated."
+                          body="We need at least one bid on every product before an optimized allocation scenario can be calculated."
                         />
                       ) : (
                         <>
@@ -882,11 +989,13 @@ export default function AuctionDetail({
                                         {s.revenue.toLocaleString("en-US")} EGP
                                       </span>
                                       <div className={`${s.key === "max" ? "bg-[rgba(27,158,116,0.08)]" : "bg-[#f5f5f5]"} flex items-center px-[8px] relative rounded-[24px] shrink-0 w-full overflow-clip`}>
-                                        <span className={`font-cairo font-bold text-[10px] leading-[normal] whitespace-pre ${s.key === "max" ? "text-[#1b9e74]" : "text-[#666464]"}`}>{s.note}</span>
+                                        <span className={`font-cairo font-bold text-[10px] leading-[normal] whitespace-pre ${s.key === "max" ? "text-[#1b9e74]" : "text-[#666464]"}`}>
+                                          {settled && s.key === selectedScenario ? "✓ This scenario was accepted" : s.note}
+                                        </span>
                                       </div>
                                     </div>
                                   </div>
-                                  {sel && (
+                                  {sel && !settled && (
                                     <span
                                       role="button"
                                       tabIndex={locked ? -1 : 0}
@@ -914,7 +1023,7 @@ export default function AuctionDetail({
                                   </span>
                                   <span className="font-cairo font-medium text-[14px] text-[rgba(19,19,19,0.7)] leading-[normal]">{activeScenario.allocation.length} Product</span>
                                 </div>
-                                {locked && <AucLockIcon />}
+                                {settled ? <AcceptedChip /> : locked && <AucLockIcon />}
                               </div>
                               <div className="flex flex-col gap-[16px] relative shrink-0 w-full">
                                 {[...new Set(activeScenario.allocation.map((b) => b.bidderId))].map((buyerId) => {
@@ -1013,13 +1122,17 @@ export default function AuctionDetail({
                   </div>
                   <div className="flex items-start justify-between relative shrink-0 w-full">
                     <div className="flex flex-col gap-[3px] h-[57px] items-start relative shrink-0 w-[136px]">
-                      <span className="font-cairo font-semibold text-[12px] text-[rgba(19,19,19,0.6)] leading-[normal] whitespace-nowrap">Current Highest Bid</span>
-                      <span className="font-cairo font-bold text-[#28459d] text-[24px] leading-[32px] whitespace-nowrap">{maxBid.toLocaleString("en-US")} $</span>
+                      <span className="font-cairo font-semibold text-[12px] text-[rgba(19,19,19,0.6)] leading-[normal] whitespace-nowrap">
+                        {settled ? "Total Price" : "Current Highest Bid"}
+                      </span>
+                      <span className="font-cairo font-bold text-[#28459d] text-[24px] leading-[32px] whitespace-nowrap">
+                        {(settled ? totalAcceptedPrice : maxBid).toLocaleString("en-US")} $
+                      </span>
                     </div>
-                    <div className="bg-[rgba(27,158,116,0.1)] flex flex-col items-center p-[8px] relative rounded-[8px] shrink-0 w-[157px]">
-                      <div className="flex flex-col gap-[3px] items-start relative shrink-0 text-[#1b9e74]">
+                    <div className={`${running ? "bg-[rgba(27,158,116,0.1)]" : "bg-[#f9f9f9]"} flex flex-col items-center justify-center p-[8px] relative rounded-[8px] shrink-0 w-[157px]`}>
+                      <div className={`flex flex-col gap-[3px] items-start relative shrink-0 ${running ? "text-[#1b9e74]" : "text-[rgba(19,19,19,0.4)]"}`}>
                         <span className="font-cairo font-semibold text-[12px] leading-[normal] whitespace-nowrap">Time Remaining</span>
-                        <span className="font-cairo font-bold text-[20px] leading-[32px] whitespace-nowrap">{running ? auction.detailTimeRemaining : "0h 0m"}</span>
+                        <span className="font-cairo font-bold text-[20px] leading-[32px] whitespace-nowrap">{running ? auction.detailTimeRemaining : settled ? "0s" : "0h 0m"}</span>
                       </div>
                     </div>
                   </div>
