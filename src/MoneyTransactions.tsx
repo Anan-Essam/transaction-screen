@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { LogoutContext } from "./authContext";
 import imgFrame58 from "./assets/figma/imgFrame58.png";
 import imgNextLogo from "./assets/figma/imgNextLogo011Vectorized.svg";
 import SideBar from "./components/SideBar";
@@ -9,8 +10,10 @@ import { ArrowDownIcon, SupportIcon, ChatIcon, BellIcon, SearchIcon } from "./co
 import type { LedgerRow } from "./data";
 import type { SideBarPage } from "./components/SideBar";
 
-/* "Frame 61" — user profile row above the sidebar */
+/* "Frame 61" — user profile row above the sidebar; chevron opens the profile menu with Log Out */
 export function UserProfile() {
+  const logout = useContext(LogoutContext);
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="content-stretch flex items-center relative shrink-0 w-full lg:w-[200px]">
       <div className="content-stretch flex items-center justify-between relative shrink-0 w-full lg:w-[201px]">
@@ -22,13 +25,35 @@ export function UserProfile() {
             <p className="leading-[18px]">Ahmed Karam</p>
           </div>
         </div>
+        {menuOpen && (
+          <>
+            <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+            <div
+              role="menu"
+              aria-label="Profile menu"
+              className="absolute left-0 top-[40px] z-40 bg-white border border-[#f5f5f5] rounded-[12px] shadow-[0px_4px_16px_0px_rgba(0,0,0,0.08)] py-[4px] w-[160px]"
+            >
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  logout();
+                }}
+                className="w-full px-[16px] py-[8px] cursor-pointer hover:bg-[#f9f9f9] text-left font-cairo font-semibold text-[14px] text-[#131313]"
+              >
+                Log Out
+              </button>
+            </div>
+          </>
+        )}
         <button
           type="button"
-          onClick={() => {
-            /* open profile menu */
-          }}
+          onClick={() => setMenuOpen((o) => !o)}
           className="flex items-center justify-center relative shrink-0 cursor-pointer"
           aria-label="Open profile menu"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
         >
           <div className="-scale-y-100 flex-none rotate-180">
             <div className="bg-[rgba(40,69,157,0.1)] content-stretch flex items-center justify-center p-[6px] relative rounded-[18px] size-[24px]">

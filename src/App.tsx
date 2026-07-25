@@ -1,4 +1,6 @@
 import { useState } from "react";
+import AuthFlow from "./SignIn";
+import { LogoutContext } from "./authContext";
 import MoneyTransactions from "./MoneyTransactions";
 import WasteTransactions from "./TransactionDetail";
 import ProductLibrary from "./ProductLibrary";
@@ -41,6 +43,7 @@ let nextId = 100;
 const uid = () => `n${nextId++}`;
 
 export default function App() {
+  const [authed, setAuthed] = useState(false);
   const [page, setPage] = useState<SideBarPage>("transaction");
   const [detailRow, setDetailRow] = useState<LedgerRow | null>(null);
   const [modal, setModal] = useState<ModalState>(null);
@@ -187,8 +190,25 @@ export default function App() {
     close();
   };
 
+  /* Successful login always lands on the Dashboard */
+  const login = () => {
+    setAuthed(true);
+    setPage("dashboard");
+    setDetailRow(null);
+    setModal(null);
+  };
+
+  /* Logout returns to the phone-entry login screen; in-memory data stays */
+  const logout = () => {
+    setAuthed(false);
+    setDetailRow(null);
+    setModal(null);
+  };
+
+  if (!authed) return <AuthFlow onLogin={login} />;
+
   return (
-    <>
+    <LogoutContext.Provider value={logout}>
       {page === "dashboard" ? (
         <Homepage onNavigate={navigate} />
       ) : page === "productLibrary" ? (
@@ -231,6 +251,6 @@ export default function App() {
       )}
       {modal?.kind === "addItem" && <AddNewItem onClose={close} onSubmit={submitNewItem} />}
       {modal?.kind === "editItem" && <AddNewItem onClose={close} onSubmit={submitEditItem} initial={modal.product} />}
-    </>
+    </LogoutContext.Provider>
   );
 }
