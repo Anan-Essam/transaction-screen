@@ -22,7 +22,10 @@ export function lookupPhone(phone: string): PhoneState {
 
 /* ---------- shared pieces ---------- */
 
-/* Full-bleed scrapyard photo + 40% black overlay + centered white card */
+/* Full-bleed scrapyard photo + 40% black overlay + centered white card.
+   Card geometry synced to the updated "Sign in 1" frame: 481px wide, 514px tall,
+   pt-24 / pb-20 / px-20. Taller screens keep the old frames' extra content room,
+   adjusted by exactly the header shrink and padding delta (614 - 20 + 4 = 598). */
 function AuthShell({ children, tall }: { children: ReactNode; tall?: boolean }) {
   return (
     <div className="relative min-h-screen w-full" data-name="Sign in">
@@ -30,7 +33,7 @@ function AuthShell({ children, tall }: { children: ReactNode; tall?: boolean }) 
       <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)]" />
       <div className="relative flex items-center justify-center min-h-screen p-[16px] sm:p-[24px]">
         <div
-          className={`bg-white border border-[#f5f5f5] border-solid flex flex-col gap-[40px] items-center justify-between p-[20px] rounded-[24px] w-full max-w-[611px] ${tall ? "md:h-[614px]" : "md:h-[604px]"} md:gap-0`}
+          className={`bg-white border border-[#f5f5f5] border-solid flex flex-col gap-[40px] items-center justify-between pb-[20px] pt-[24px] px-[20px] rounded-[24px] w-full max-w-[481px] ${tall ? "md:h-[598px]" : "md:h-[514px]"} md:gap-0`}
         >
           {children}
         </div>
@@ -46,11 +49,11 @@ function AuthHeader({ title, subtitle, subtitleLeading }: { title: string; subti
         <img alt="Next by Bekia" className="absolute block inset-0 max-w-none size-full" src={authLogo} />
       </div>
       <div className="[word-break:break-word] flex flex-col gap-[8px] items-center leading-[0] not-italic relative shrink-0 text-center w-full">
-        <div className="flex flex-col font-cairo font-bold justify-center relative shrink-0 text-[#131313] text-[24px] md:text-[32px] w-full max-w-[453px]">
-          <p className="leading-[36px] md:leading-[48px]">{title}</p>
+        <div className="flex flex-col font-cairo font-bold justify-center relative shrink-0 text-[#131313] text-[26px] w-full max-w-[453px]">
+          <p className="leading-[28px]">{title}</p>
         </div>
-        <div className="flex flex-col font-cairo font-normal justify-center relative shrink-0 text-[18px] md:text-[20px] text-[rgba(19,19,19,0.7)] w-full max-w-[453px]">
-          <p className={subtitleLeading ?? "leading-[normal]"}>{subtitle}</p>
+        <div className="flex flex-col font-cairo font-normal justify-center min-h-[27px] relative shrink-0 text-[16px] text-[rgba(19,19,19,0.7)] w-full max-w-[453px]">
+          <p className={subtitleLeading ?? "leading-[16px]"}>{subtitle}</p>
         </div>
       </div>
     </div>
@@ -339,7 +342,7 @@ function OtpBoxes({ digits, onChange }: { digits: string[]; onChange: (d: string
             if (e.key === "Backspace" && !digits[i] && i > 0) refs.current[i - 1]?.focus();
           }}
           onFocus={(e) => e.target.select()}
-          className="bg-white border border-[#ccc] border-solid rounded-[8px] shrink-0 size-[44px] sm:size-[72px] text-center font-cairo font-bold text-[24px] text-[#131313] outline-none focus:border-[#28459d]"
+          className="bg-white border border-[#ccc] border-solid rounded-[8px] shrink-0 size-[44px] sm:size-[60px] text-center font-cairo font-bold text-[24px] text-[#131313] outline-none focus:border-[#28459d]"
         />
       ))}
     </div>
@@ -400,7 +403,11 @@ function SignIn4({ onVerify, onBack }: { onVerify: () => void; onBack: () => voi
     <AuthShell tall>
       <form onSubmit={submit} className="contents" data-name="Sign in 4">
         <div className="flex flex-col gap-[40px] md:gap-[64px] items-center relative shrink-0 w-full">
-          <AuthHeader title="Enter the verification code" subtitle="We’ve sent a 6-digit code to your email (e.g., ahmed***@mail.com)" />
+          <AuthHeader
+            title="Enter the verification code"
+            subtitle="We’ve sent a 6-digit code to your email (e.g., ahmed***@mail.com)"
+            subtitleLeading="leading-[24px]"
+          />
           <div className="flex flex-col gap-[40px] items-center justify-center relative shrink-0 w-full">
             <OtpBoxes digits={digits} onChange={setDigits} />
             <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic opacity-80 relative shrink-0 text-[16px] text-[rgba(19,19,19,0.6)] whitespace-nowrap">
@@ -452,7 +459,7 @@ function SignIn2({
     <AuthShell tall>
       <form onSubmit={submit} className="contents" data-name="Sign in 2">
         <div className="flex flex-col gap-[40px] md:gap-[56px] items-center relative shrink-0 w-full">
-          <AuthHeader title={title} subtitle="Create a strong new password to keep your account secure." subtitleLeading="leading-[30px]" />
+          <AuthHeader title={title} subtitle="Create a strong new password to keep your account secure." subtitleLeading="leading-[24px]" />
           <div className="flex flex-col items-start justify-center relative shrink-0 w-full">
             <div className="flex flex-col gap-[16px] items-start relative shrink-0 w-full">
               <div className="flex flex-col gap-[32px] items-start justify-center relative shrink-0 w-full">
@@ -547,7 +554,7 @@ function SignIn5({ onSubmit, onBack }: { onSubmit: (phone: string) => void; onBa
     <AuthShell>
       <form onSubmit={submit} className="contents" data-name="Sign in 5">
         <div className="flex flex-col gap-[40px] md:gap-[64px] items-center relative shrink-0 w-full">
-          <AuthHeader title="Forgot your password" subtitle="Enter your registered email to receive reset instructions" subtitleLeading="leading-[30px]" />
+          <AuthHeader title="Forgot your password" subtitle="Enter your registered email to receive reset instructions" subtitleLeading="leading-[24px]" />
           <div className="flex flex-col items-start justify-center relative shrink-0 w-full">
             <PhoneNumberField value={phone} onChange={setPhone} autoFocus />
           </div>
