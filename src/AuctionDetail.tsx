@@ -753,7 +753,7 @@ export default function AuctionDetail({
                               aria-pressed={active}
                               className={`${active ? "bg-[#28459d]" : "bg-[rgba(245,245,245,0.2)] border border-[#f5f5f5] border-solid"} flex h-[32px] items-center justify-center px-[16px] py-[8px] relative rounded-[24px] shrink-0 cursor-pointer`}
                             >
-                              <span className={`font-cairo ${active ? "font-bold text-white" : "font-medium text-[#828282]"} text-[16px] leading-[normal] whitespace-nowrap`}>{c ?? "All"}</span>
+                              <span className={`font-cairo ${active ? "font-bold text-white" : "font-medium text-[#828282]"} text-[14px] leading-[normal] whitespace-nowrap`}>{c ?? "All"}</span>
                             </button>
                           );
                         })}

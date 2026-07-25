@@ -42,6 +42,9 @@ import aucAwardCoin from "../assets/figma/aucAwardCoin.png";
 import aucTrophy from "../assets/figma/aucTrophy.png";
 import aucEmptyGavel from "../assets/figma/aucEmptyGavel.png";
 import aucEmptyShare from "../assets/figma/aucEmptyShare.svg";
+import aucBadgeActive from "../assets/figma/aucBadgeActive.png";
+import aucBadgeClosed from "../assets/figma/aucBadgeClosed.png";
+import aucBadgeDraft from "../assets/figma/aucBadgeDraft.png";
 
 /* search_450058 1 — 16px search glass */
 export function AucSearchIcon() {
@@ -565,6 +568,54 @@ export function AucKycHeaderIcon() {
   return (
     <div className="relative shrink-0 size-[14px]">
       <img alt="" className="absolute block inset-0 max-w-none size-full" src={aucKycIcon} />
+    </div>
+  );
+}
+
+/* "Frame 34" — the status badge overlaid on an auction card's photo.
+   Each state is its own Figma variant with a distinct fill, gap, padding and icon:
+     active  (215:33965) rgba(27,158,116,0.7)  gap 2  p 8      Icons/Money/Cash/Version-2  15x16
+     Closed  (215:33958) rgba(130,130,130,0.8) gap 4  p 8      Icons/Cards/Summer-2        16x16
+     Drafted (231:12255) rgba(40,69,157,0.48)  gap 4  px12 py8 Icons/Briefcase/Money-1     13x16 */
+export type AuctionBadgeState = "active" | "closed" | "drafted";
+
+export function AuctionStatusBadge({ state }: { state: AuctionBadgeState }) {
+  if (state === "active") {
+    return (
+      <div className="bg-[rgba(27,158,116,0.7)] flex gap-[2px] h-[24px] items-center justify-center p-[8px] relative rounded-[24px]" data-name="Frame 34">
+        <div className="h-[16px] relative shrink-0 w-[15px]" data-name="Icons/Money/Cash/Version-2">
+          <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={aucBadgeActive} />
+        </div>
+        <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-white whitespace-nowrap">
+          <p className="leading-[normal]">active</p>
+        </div>
+      </div>
+    );
+  }
+  if (state === "drafted") {
+    return (
+      <div className="bg-[rgba(40,69,157,0.48)] flex gap-[4px] h-[24px] items-center justify-center px-[12px] py-[8px] relative rounded-[24px]" data-name="Frame 34">
+        <div className="h-[16px] relative shrink-0 w-[13px]" data-name="Icons/Briefcase/Money-1">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <img alt="" className="absolute h-[123.47%] left-[-21.87%] max-w-none top-[-10.89%] w-[149.6%]" src={aucBadgeDraft} />
+          </div>
+        </div>
+        <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-white whitespace-nowrap">
+          <p className="leading-[normal]">Drafted</p>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="bg-[rgba(130,130,130,0.8)] flex gap-[4px] h-[24px] items-center justify-center p-[8px] relative rounded-[24px]" data-name="Frame 34">
+      <div className="relative shrink-0 size-[16px]" data-name="Icons/Cards/Summer-2">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <img alt="" className="absolute left-[-6.44%] max-w-none size-[120%] top-[-8.66%]" src={aucBadgeClosed} />
+        </div>
+      </div>
+      <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-white whitespace-nowrap">
+        <p className="leading-[normal]">{`Closed `}</p>
+      </div>
     </div>
   );
 }

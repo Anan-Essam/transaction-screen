@@ -21,10 +21,10 @@ export default function AuctionEmptyState({
       <AucEmptyGavel />
       <div className="flex flex-col gap-[32px] items-center relative shrink-0 max-w-full">
         <div className="[word-break:break-word] flex flex-col gap-[4px] items-center leading-[0] not-italic relative shrink-0 text-center w-full">
-          <div className="flex flex-col font-cairo font-bold justify-center relative shrink-0 text-[#131313] text-[24px]">
+          <div className="flex flex-col font-cairo font-bold justify-center relative shrink-0 text-[#131313] text-[20px]">
             <p className="leading-[normal]">{title}</p>
           </div>
-          <div className="flex flex-col font-cairo font-medium justify-center relative shrink-0 text-[16px] text-[rgba(19,19,19,0.7)] w-[422px] max-w-full px-[16px]">
+          <div className="flex flex-col font-cairo font-medium justify-center relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] w-[422px] max-w-full px-[16px]">
             <p className="leading-[24px]">{body}</p>
           </div>
         </div>

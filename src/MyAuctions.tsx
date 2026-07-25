@@ -24,8 +24,9 @@ import {
   AucMoneyIcon,
   AucJudgmentIcon,
   AucArrowCircle,
-  AucAwardCoin,
+  AuctionStatusBadge,
 } from "./components/auctionIcons";
+import type { AuctionBadgeState } from "./components/auctionIcons";
 import AuctionEmptyState from "./components/AuctionEmptyState";
 import { AUCTION_SITES, AUCTION_CATEGORIES, auctionTotals, formatAmount } from "./auctionsData";
 import type { Auction } from "./auctionsData";
@@ -82,18 +83,18 @@ function Frame36({ label, progress }: { label: string; progress: number }) {
 /* "Frame 2085663774" — one auction row card. The white body is notched at the
    bottom-right (Figma "Rectangle 933") so the blue action button sits in the cut-out. */
 /* Figma card states ("Frame 2085663774"): Default = active, Variant2 = Closed, Variant3 = Drafted */
-const CARD_STATE: Record<Auction["status"], { label: string; badge: string }> = {
-  active: { label: "active", badge: "bg-[rgba(27,158,116,0.7)]" },
-  ready: { label: "Closed", badge: "bg-[rgba(102,100,100,0.7)]" },
-  completed: { label: "Closed", badge: "bg-[rgba(102,100,100,0.7)]" },
-  cancelled: { label: "Closed", badge: "bg-[rgba(102,100,100,0.7)]" },
-  draft: { label: "Drafted", badge: "bg-[rgba(40,69,157,0.7)]" },
+const CARD_STATE: Record<Auction["status"], AuctionBadgeState> = {
+  active: "active",
+  ready: "closed",
+  completed: "closed",
+  cancelled: "closed",
+  draft: "drafted",
 };
 
 function AuctionCard({ auction, onOpen }: { auction: Auction; onOpen: () => void }) {
   const totals = auctionTotals(auction);
   const running = auction.status === "active";
-  const state = CARD_STATE[auction.status];
+  const badgeState = CARD_STATE[auction.status];
   return (
     <div className="relative shrink-0 w-full" data-name="Frame 2085663774">
       {/* "Rectangle 933" — white body whose outline steps around the action button.
@@ -116,11 +117,8 @@ function AuctionCard({ auction, onOpen }: { auction: Auction; onOpen: () => void
           <div className="h-[106px] overflow-clip relative rounded-[16px] w-full md:w-[146px] shrink-0">
             <img alt="" className="absolute max-w-none object-cover rounded-[16px] size-full" src={auction.image} />
             <div className="absolute bg-gradient-to-b from-[rgba(19,32,67,0)] inset-0 rounded-[16px] to-[99.038%] to-[rgba(19,32,67,0.6)]" />
-            <div className={`absolute ${state.badge} flex gap-[2px] h-[24px] items-center justify-center left-[8.27px] p-[8px] rounded-[24px] top-[8px]`}>
-              <AucAwardCoin size={15} />
-              <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-white whitespace-nowrap">
-                <p className="leading-[normal]">{state.label}</p>
-              </div>
+            <div className="absolute left-[8.27px] top-[8px]">
+              <AuctionStatusBadge state={badgeState} />
             </div>
           </div>
           <div className="flex flex-col gap-[20px] items-start px-[16px] relative flex-1 min-w-0 w-full">
@@ -540,7 +538,7 @@ export default function MyAuctions({ auctions, onNavigate, onOpenAuction }: MyAu
                         className={`${activeTab ? "bg-[#28459d]" : "bg-[rgba(245,245,245,0.2)]"} flex h-[32px] items-center justify-center px-[16px] py-[8px] relative rounded-[24px] shrink-0 cursor-pointer`}
                         data-name="Category Tab"
                       >
-                        <div className={`[word-break:break-word] flex flex-col font-cairo ${activeTab ? "font-bold text-white" : "font-medium text-[#828282]"} justify-center leading-[0] not-italic relative shrink-0 text-[16px] whitespace-nowrap`}>
+                        <div className={`[word-break:break-word] flex flex-col font-cairo ${activeTab ? "font-bold text-white" : "font-medium text-[#828282]"} justify-center leading-[0] not-italic relative shrink-0 text-[14px] whitespace-nowrap`}>
                           <p className="leading-[normal]">{s ?? "All"}</p>
                         </div>
                       </button>
