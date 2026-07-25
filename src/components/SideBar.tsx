@@ -11,7 +11,7 @@ import {
 import { ProductLibraryIconWhite, TransactionIconDark } from "./icons3";
 import { DashboardIconWhite } from "./icons4";
 
-export type SideBarPage = "dashboard" | "productLibrary" | "transaction";
+export type SideBarPage = "dashboard" | "myAuctions" | "productLibrary" | "transaction";
 
 type SideBarItemProps = {
   icon: React.ReactNode;
@@ -83,13 +83,19 @@ export default function SideBar({ className, active = "transaction", onNavigate 
           ) : (
             <SideBarItem icon={<DashboardIcon />} label="Dashboard" onClick={() => go("dashboard")} />
           )}
-          <SideBarItem
-            icon={<MyAuctionsIcon />}
-            label="My Auctions"
-            onClick={() => {
-              /* navigate to My Auctions */
-            }}
-          />
+          {active === "myAuctions" ? (
+            <ActiveSideBarItem
+              icon={
+                <div className="brightness-0 invert">
+                  <MyAuctionsIcon />
+                </div>
+              }
+              label="My Auctions"
+              onClick={() => go("myAuctions")}
+            />
+          ) : (
+            <SideBarItem icon={<MyAuctionsIcon />} label="My Auctions" onClick={() => go("myAuctions")} />
+          )}
           {active === "productLibrary" ? (
             <ActiveSideBarItem icon={<ProductLibraryIconWhite />} label="Product Library" onClick={() => go("productLibrary")} />
           ) : (
@@ -117,7 +123,7 @@ export default function SideBar({ className, active = "transaction", onNavigate 
         </div>
       </div>
       <div
-        className={`absolute hidden lg:flex ${active === "dashboard" ? "inset-[2.54%_0.25%_86.34%_99.75%]" : active === "productLibrary" ? "inset-[15.47%_0.25%_70.77%_99.75%]" : "inset-[22.87%_0.25%_63.37%_99.75%]"} items-center justify-center`}
+        className={`absolute hidden lg:flex ${active === "dashboard" ? "inset-[2.54%_0.25%_86.34%_99.75%]" : active === "myAuctions" ? "inset-[9%_0.25%_78.56%_99.75%]" : active === "productLibrary" ? "inset-[15.47%_0.25%_70.77%_99.75%]" : "inset-[22.87%_0.25%_63.37%_99.75%]"} items-center justify-center`}
         style={{ containerType: "size" }}
       >
         <div className="-rotate-90 flex-none h-[0px] w-[100cqh]">

@@ -2,6 +2,12 @@ import { useState } from "react";
 import AuthFlow from "./SignIn";
 import { LogoutContext } from "./authContext";
 import MoneyTransactions from "./MoneyTransactions";
+import MyAuctions from "./MyAuctions";
+import AuctionDetail from "./AuctionDetail";
+import { AcceptBidProduct, AcceptBidBuyer, AcceptBidScenario, CloseAuctionModal } from "./components/modals/AuctionModals";
+import { INITIAL_AUCTIONS } from "./auctionsData";
+import type { Auction, AcceptedBid, Bid, Scenario } from "./auctionsData";
+import type { AcceptRequest } from "./AuctionDetail";
 import WasteTransactions from "./TransactionDetail";
 import ProductLibrary from "./ProductLibrary";
 import Homepage from "./Dashboard";
@@ -27,6 +33,13 @@ import type { SideBarPage } from "./components/SideBar";
 import type { WasteSubmission } from "./components/modals/NewWasteTransaction";
 import type { MoneySubmission } from "./components/modals/NewMoneyTransaction";
 
+type AuctionModalState =
+  | { kind: "acceptProduct"; auctionId: string; bid: Bid }
+  | { kind: "acceptBuyer"; auctionId: string; bidderId: string; bids: Bid[] }
+  | { kind: "acceptScenario"; auctionId: string; scenario: Scenario }
+  | { kind: "closeAuction"; auctionId: string }
+  | null;
+
 type ModalState =
   | { kind: "picker" }
   | { kind: "newWaste" }
@@ -51,6 +64,11 @@ export default function App() {
   const [payments, setPayments] = useState(INITIAL_PAYMENTS);
   const [installments, setInstallments] = useState(INITIAL_INSTALLMENTS);
   const [products, setProducts] = useState<LibraryProduct[]>(() => buildInitialProducts(DEFAULT_PRODUCT_IMAGES));
+  const [auctions, setAuctions] = useState<Auction[]>(INITIAL_AUCTIONS);
+  const [auctionId, setAuctionId] = useState<string | null>(null);
+  const [acceptedMap, setAcceptedMap] = useState<Record<string, AcceptedBid[]>>({});
+  const [declinedMap, setDeclinedMap] = useState<Record<string, string[]>>({});
+  const [auctionModal, setAuctionModal] = useState<AuctionModalState>(null);
 
   const today = formatLedgerDate(new Date());
   const close = () => setModal(null);
@@ -58,6 +76,44 @@ export default function App() {
     setPage(p);
     setDetailRow(null);
     setModal(null);
+    setAuctionId(null);
+    setAuctionModal(null);
+  };
+
+  const currentAuction = auctions.find((a) => a.id === auctionId) ?? null;
+
+  /* Accept-offer routing from the detail views */
+  const requestAccept = (req: AcceptRequest) => {
+    if (!currentAuction) return;
+    if (req.kind === "product") setAuctionModal({ kind: "acceptProduct", auctionId: currentAuction.id, bid: req.bid });
+    else if (req.kind === "buyer") setAuctionModal({ kind: "acceptBuyer", auctionId: currentAuction.id, bidderId: req.bidderId, bids: req.bids });
+    else setAuctionModal({ kind: "acceptScenario", auctionId: currentAuction.id, scenario: req.scenario });
+  };
+
+  /* Record accepted offers; the auction settles (completed) once every product has an accepted bid */
+  const confirmAccept = (targetAuctionId: string, accepted: AcceptedBid[]) => {
+    const auction = auctions.find((a) => a.id === targetAuctionId);
+    if (!auction) return;
+    const next = [...(acceptedMap[targetAuctionId] ?? []), ...accepted.filter((n) => !(acceptedMap[targetAuctionId] ?? []).some((e) => e.bidId === n.bidId))];
+    setAcceptedMap((m) => ({ ...m, [targetAuctionId]: next }));
+    const acceptedIds = next.map((a) => a.bidId);
+    const allAwarded = auction.products.every((p) => auction.bids.some((b) => b.productId === p.id && acceptedIds.includes(b.id)));
+    if (allAwarded) setAuctions((list) => list.map((a) => (a.id === targetAuctionId ? { ...a, status: "completed" } : a)));
+    setAuctionModal(null);
+  };
+
+  /* Close Auction outcomes: end-early -> ready to accept; cancel -> voided */
+  const closeAuction = (targetAuctionId: string, outcome: "end" | "cancel") => {
+    setAuctions((list) =>
+      list.map((a) =>
+        a.id === targetAuctionId ? { ...a, status: outcome === "end" ? "ready" : "cancelled", timeRemaining: "0 hours", timeProgress: 1 } : a,
+      ),
+    );
+    setAuctionModal(null);
+  };
+
+  const declineBid = (targetAuctionId: string, bidId: string) => {
+    setDeclinedMap((m) => ({ ...m, [targetAuctionId]: [...(m[targetAuctionId] ?? []), bidId] }));
   };
 
   /* Add New Item modal — appends the product to the library */
@@ -211,6 +267,22 @@ export default function App() {
     <LogoutContext.Provider value={logout}>
       {page === "dashboard" ? (
         <Homepage onNavigate={navigate} />
+      ) : page === "myAuctions" ? (
+        currentAuction ? (
+          <AuctionDetail
+            auction={currentAuction}
+            accepted={acceptedMap[currentAuction.id] ?? []}
+            declined={declinedMap[currentAuction.id] ?? []}
+            onNavigate={navigate}
+            onBack={() => setAuctionId(null)}
+            onRequestAccept={requestAccept}
+            onRequestClose={() => setAuctionModal({ kind: "closeAuction", auctionId: currentAuction.id })}
+            onDeclineBid={(bidId) => declineBid(currentAuction.id, bidId)}
+            onOpenTransaction={() => setModal({ kind: "picker" })}
+          />
+        ) : (
+          <MyAuctions auctions={auctions} onNavigate={navigate} onOpenAuction={(a) => setAuctionId(a.id)} />
+        )
       ) : page === "productLibrary" ? (
         <ProductLibrary
           products={products}
@@ -248,6 +320,29 @@ export default function App() {
       )}
       {modal?.kind === "addWaste" && (
         <AddWasteToTransaction buyer={modal.row?.buyer ?? "Buyer #7"} bidId="BID-2041" onClose={close} onSubmit={submitAddWaste} />
+      )}
+      {auctionModal?.kind === "acceptProduct" && currentAuction && (
+        <AcceptBidProduct auction={currentAuction} bid={auctionModal.bid} onClose={() => setAuctionModal(null)} onConfirm={(acc) => confirmAccept(auctionModal.auctionId, acc)} />
+      )}
+      {auctionModal?.kind === "acceptBuyer" && currentAuction && (
+        <AcceptBidBuyer
+          auction={currentAuction}
+          bidderId={auctionModal.bidderId}
+          bids={auctionModal.bids}
+          onClose={() => setAuctionModal(null)}
+          onConfirm={(acc) => confirmAccept(auctionModal.auctionId, acc)}
+        />
+      )}
+      {auctionModal?.kind === "acceptScenario" && currentAuction && (
+        <AcceptBidScenario
+          auction={currentAuction}
+          scenario={auctionModal.scenario}
+          onClose={() => setAuctionModal(null)}
+          onConfirm={(acc) => confirmAccept(auctionModal.auctionId, acc)}
+        />
+      )}
+      {auctionModal?.kind === "closeAuction" && currentAuction && (
+        <CloseAuctionModal auction={currentAuction} onClose={() => setAuctionModal(null)} onConfirm={(outcome) => closeAuction(auctionModal.auctionId, outcome)} />
       )}
       {modal?.kind === "addItem" && <AddNewItem onClose={close} onSubmit={submitNewItem} />}
       {modal?.kind === "editItem" && <AddNewItem onClose={close} onSubmit={submitEditItem} initial={modal.product} />}
