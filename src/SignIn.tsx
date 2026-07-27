@@ -594,7 +594,7 @@ type AuthStep =
   | { step: "forgotOtp"; phone: string }
   | { step: "forgotReset"; phone: string };
 
-export default function AuthFlow({ onLogin }: { onLogin: () => void }) {
+export default function AuthFlow({ onLogin }: { onLogin: (phone: string) => void }) {
   const [state, setState] = useState<AuthStep>({ step: "phone" });
   const toLogin = () => setState({ step: "phone" });
 
@@ -616,10 +616,10 @@ export default function AuthFlow({ onLogin }: { onLogin: () => void }) {
       screen = <SignIn4 onVerify={() => setState({ step: "setPassword", phone: state.phone })} onBack={toLogin} />;
       break;
     case "setPassword":
-      screen = <SignIn2 title="Set your password" showRememberMe onSubmit={() => onLogin()} onBack={toLogin} />;
+      screen = <SignIn2 title="Set your password" showRememberMe onSubmit={() => onLogin(state.phone)} onBack={toLogin} />;
       break;
     case "password":
-      screen = <SignIn8 phone={state.phone} onLogin={() => onLogin()} onForgot={() => setState({ step: "forgotPhone" })} onBack={toLogin} />;
+      screen = <SignIn8 phone={state.phone} onLogin={() => onLogin(state.phone)} onForgot={() => setState({ step: "forgotPhone" })} onBack={toLogin} />;
       break;
     case "forgotPhone":
       screen = <SignIn5 onSubmit={(phone) => setState({ step: "forgotOtp", phone })} onBack={toLogin} />;

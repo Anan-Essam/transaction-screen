@@ -80,6 +80,7 @@ export function SelectField({ label, placeholder, value, options, onSelect, labe
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-label={label}
         onClick={() => !disabled && setOpen((o) => !o)}
         className="content-stretch cursor-pointer flex flex-col items-start relative shrink-0 w-full"
         data-name="Input"
@@ -450,10 +451,12 @@ type TextFieldProps = {
   placeholder: string;
   value: string;
   onChange: (v: string) => void;
+  /* optional fields drop the red asterisk (e.g. the Add New Site contact block) */
+  required?: boolean;
 };
 
 /* ".❖ Main / Input" — floating-label free text input (white label chip) */
-export function TextField({ label, placeholder, value, onChange }: TextFieldProps) {
+export function TextField({ label, placeholder, value, onChange, required = true }: TextFieldProps) {
   return (
     <div className="content-stretch flex flex-col items-start relative rounded-[2px] shrink-0 w-full" data-name=".❖ Main / Input">
       <div className="bg-white border border-[#ccc] border-solid content-stretch flex flex-col h-[48px] items-start justify-center px-[16px] relative rounded-[8px] shrink-0 w-full" data-name="Input">
@@ -462,7 +465,7 @@ export function TextField({ label, placeholder, value, onChange }: TextFieldProp
             <div className="flex flex-col font-cairo font-semibold justify-center leading-[0] opacity-80 relative shrink-0 text-[#131313] text-[16px]">
               <p className="leading-[20px]">{label}</p>
             </div>
-            <p className="font-['Source_Sans_Pro',sans-serif] font-semibold leading-[16px] opacity-80 relative shrink-0 text-[#da1414] text-[11px]">*</p>
+            {required && <p className="font-['Source_Sans_Pro',sans-serif] font-semibold leading-[16px] opacity-80 relative shrink-0 text-[#da1414] text-[11px]">*</p>}
           </div>
         </div>
         <input
@@ -470,6 +473,7 @@ export function TextField({ label, placeholder, value, onChange }: TextFieldProp
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
+          aria-label={label}
           className="[word-break:break-word] w-full bg-transparent border-none outline-none font-cairo font-semibold leading-[24px] opacity-80 text-[14px] text-[#131313] placeholder:text-[rgba(19,19,19,0.6)]"
         />
       </div>

@@ -30,6 +30,30 @@ import {
 import type { LedgerRow, LibraryProduct } from "./data";
 import type { NewItemSubmission } from "./components/modals/AddNewItem";
 import type { SideBarPage } from "./components/SideBar";
+import Settings from "./Settings";
+import type { SettingsSection } from "./Settings";
+import {
+  EditCompanyInfoModal,
+  EditUserInfoModal,
+  AddNewSiteModal,
+  AddUserModal,
+  LogOutModal,
+  ChangePasswordFlow,
+  PasswordChangedDialog,
+} from "./components/modals/SettingsModals";
+import {
+  INITIAL_COMPANY,
+  INITIAL_USER,
+  INITIAL_KYC_DOCS,
+  INITIAL_SITES,
+  INITIAL_SESSIONS,
+  LOGIN_HISTORY,
+  INITIAL_SECURITY_PREFS,
+  INITIAL_TEAM,
+  lookupRole,
+  roleOverrideFromUrl,
+} from "./settingsData";
+import type { SecurityPreferences, Site, TeamMember, UserRole } from "./settingsData";
 import type { WasteSubmission } from "./components/modals/NewWasteTransaction";
 import type { MoneySubmission } from "./components/modals/NewMoneyTransaction";
 
@@ -38,6 +62,18 @@ type AuctionModalState =
   | { kind: "acceptBuyer"; auctionId: string; bidderId: string; bids: Bid[] }
   | { kind: "acceptScenario"; auctionId: string; scenario: Scenario }
   | { kind: "closeAuction"; auctionId: string }
+  | null;
+
+type SettingsModalState =
+  | { kind: "editCompany" }
+  | { kind: "editUser" }
+  | { kind: "addSite" }
+  | { kind: "editSite"; site: Site }
+  | { kind: "addUser" }
+  | { kind: "editMember"; member: TeamMember }
+  | { kind: "logout" }
+  | { kind: "changePassword" }
+  | { kind: "passwordChanged" }
   | null;
 
 type ModalState =
@@ -71,6 +107,18 @@ export default function App() {
   );
   const [declinedMap, setDeclinedMap] = useState<Record<string, string[]>>({});
   const [auctionModal, setAuctionModal] = useState<AuctionModalState>(null);
+
+  /* ---- Settings ---- */
+  const [role, setRole] = useState<UserRole>("admin");
+  const [settingsSection, setSettingsSection] = useState<SettingsSection>("account");
+  const [settingsModal, setSettingsModal] = useState<SettingsModalState>(null);
+  const [company, setCompany] = useState(INITIAL_COMPANY);
+  const [profile, setProfile] = useState(INITIAL_USER);
+  const [kycDocs, setKycDocs] = useState(INITIAL_KYC_DOCS);
+  const [sites, setSites] = useState<Site[]>(INITIAL_SITES);
+  const [sessions, setSessions] = useState(INITIAL_SESSIONS);
+  const [securityPrefs, setSecurityPrefs] = useState<SecurityPreferences>(INITIAL_SECURITY_PREFS);
+  const [team, setTeam] = useState<TeamMember[]>(INITIAL_TEAM);
 
   const today = formatLedgerDate(new Date());
   const close = () => setModal(null);
@@ -248,10 +296,15 @@ export default function App() {
     close();
   };
 
-  /* Successful login always lands on the Dashboard */
-  const login = () => {
+  /* Successful login always lands on the Dashboard.
+     There is no backend, so the mock phone number decides the role:
+     01000000001 -> Admin, anything else -> regular user. `?role=admin|user`
+     overrides it so both variants are easy to reach while testing. */
+  const login = (phone: string) => {
+    setRole(roleOverrideFromUrl() ?? lookupRole(phone));
     setAuthed(true);
     setPage("dashboard");
+    setSettingsSection("account");
     setDetailRow(null);
     setModal(null);
   };
@@ -261,6 +314,7 @@ export default function App() {
     setAuthed(false);
     setDetailRow(null);
     setModal(null);
+    setSettingsModal(null);
   };
 
   if (!authed) return <AuthFlow onLogin={login} />;
@@ -288,6 +342,38 @@ export default function App() {
         ) : (
           <MyAuctions auctions={auctions} onNavigate={navigate} onOpenAuction={(a) => setAuctionId(a.id)} />
         )
+      ) : page === "settings" ? (
+        <Settings
+          role={role}
+          section={settingsSection}
+          onSection={setSettingsSection}
+          onNavigate={navigate}
+          company={company}
+          user={profile}
+          kycDocs={kycDocs}
+          onEditCompany={() => setSettingsModal({ kind: "editCompany" })}
+          onEditUser={() => setSettingsModal({ kind: "editUser" })}
+          onUploadKyc={(docId, fileName) => setKycDocs((docs) => docs.map((d) => (d.id === docId ? { ...d, fileName } : d)))}
+          onRemoveKyc={(docId) => setKycDocs((docs) => docs.map((d) => (d.id === docId ? { ...d, fileName: null } : d)))}
+          sites={sites}
+          onAddSite={() => setSettingsModal({ kind: "addSite" })}
+          onEditSite={(site) => setSettingsModal({ kind: "editSite", site })}
+          sessions={sessions}
+          history={LOGIN_HISTORY}
+          prefs={securityPrefs}
+          onTogglePref={(key) => setSecurityPrefs((p) => ({ ...p, [key]: !p[key] }))}
+          onEndSession={(id) => setSessions((s) => s.filter((x) => x.id !== id))}
+          onEndOtherSessions={() => setSessions((s) => s.filter((x) => x.current))}
+          onChangePassword={() => setSettingsModal({ kind: "passwordChanged" })}
+          onForgotPassword={() => setSettingsModal({ kind: "changePassword" })}
+          team={team}
+          onAddUser={() => setSettingsModal({ kind: "addUser" })}
+          onEditMember={(member) => setSettingsModal({ kind: "editMember", member })}
+          onToggleMemberStatus={(id) =>
+            setTeam((list) => list.map((m) => (m.id === id ? { ...m, status: m.status === "Active" ? "Suspended" : "Active" } : m)))
+          }
+          onRequestLogout={() => setSettingsModal({ kind: "logout" })}
+        />
       ) : page === "productLibrary" ? (
         <ProductLibrary
           products={products}
@@ -349,6 +435,90 @@ export default function App() {
       {auctionModal?.kind === "closeAuction" && currentAuction && (
         <CloseAuctionModal auction={currentAuction} onClose={() => setAuctionModal(null)} onConfirm={(outcome) => closeAuction(auctionModal.auctionId, outcome)} />
       )}
+      {/* Settings popups — portalled, so they float above everything */}
+      {settingsModal?.kind === "editCompany" && role === "admin" && (
+        <EditCompanyInfoModal
+          company={company}
+          onClose={() => setSettingsModal(null)}
+          onSubmit={(c) => {
+            setCompany(c);
+            setSettingsModal(null);
+          }}
+        />
+      )}
+      {settingsModal?.kind === "editUser" && (
+        <EditUserInfoModal
+          user={profile}
+          onClose={() => setSettingsModal(null)}
+          onSubmit={(u) => {
+            setProfile(u);
+            setSettingsModal(null);
+          }}
+        />
+      )}
+      {settingsModal?.kind === "addSite" && (
+        <AddNewSiteModal
+          onClose={() => setSettingsModal(null)}
+          onSubmit={(s) => {
+            setSites((list) => [{ ...s, id: uid() }, ...list]);
+            setSettingsModal(null);
+          }}
+        />
+      )}
+      {settingsModal?.kind === "editSite" && (
+        <AddNewSiteModal
+          initial={settingsModal.site}
+          onClose={() => setSettingsModal(null)}
+          onSubmit={(s) => {
+            const id = settingsModal.site.id;
+            setSites((list) => list.map((x) => (x.id === id ? { ...s, id } : x)));
+            setSettingsModal(null);
+          }}
+        />
+      )}
+      {settingsModal?.kind === "addUser" && role === "admin" && (
+        <AddUserModal
+          onClose={() => setSettingsModal(null)}
+          onSubmit={({ name, role: memberRole }) => {
+            setTeam((list) => [
+              ...list,
+              {
+                id: uid(),
+                name,
+                email: `${name.toLowerCase().replace(/\s+/g, ".")}@bekia.com`,
+                role: memberRole,
+                status: "Active",
+                lastLogin: "Just now",
+                avatar: INITIAL_TEAM[0].avatar,
+              },
+            ]);
+            setSettingsModal(null);
+          }}
+        />
+      )}
+      {settingsModal?.kind === "editMember" && role === "admin" && (
+        <AddUserModal
+          initial={settingsModal.member}
+          onClose={() => setSettingsModal(null)}
+          onSubmit={({ name, role: memberRole }) => {
+            const id = settingsModal.member.id;
+            setTeam((list) => list.map((m) => (m.id === id ? { ...m, name, role: memberRole } : m)));
+            setSettingsModal(null);
+          }}
+        />
+      )}
+      {settingsModal?.kind === "logout" && (
+        <LogOutModal
+          onClose={() => setSettingsModal(null)}
+          onConfirm={() => {
+            setSettingsModal(null);
+            logout();
+          }}
+        />
+      )}
+      {settingsModal?.kind === "changePassword" && <ChangePasswordFlow onClose={() => setSettingsModal(null)} />}
+      {settingsModal?.kind === "passwordChanged" && <PasswordChangedDialog onClose={() => setSettingsModal(null)} />}
+
       {modal?.kind === "addItem" && <AddNewItem onClose={close} onSubmit={submitNewItem} />}
       {modal?.kind === "editItem" && <AddNewItem onClose={close} onSubmit={submitEditItem} initial={modal.product} />}
     </LogoutContext.Provider>
