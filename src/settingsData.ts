@@ -122,8 +122,6 @@ export type Site = {
   location: string;
   workingFrom: string;
   workingTo: string;
-  /* not part of the Add/Edit form in Figma — only rendered when the seed has it */
-  siteType?: string;
   contactName?: string;
   contactPosition?: string;
   contactPhone?: string;
@@ -141,7 +139,6 @@ export const INITIAL_SITES: Site[] = [
     location: "Egypt / Cairo, 15 May City",
     workingFrom: "Sunday",
     workingTo: "Thursday",
-    siteType: "Headquarters (HQ)",
     contactName: "Anan Essam",
     contactPosition: "Site Manager",
     contactPhone: "01021587912",
@@ -155,7 +152,6 @@ export const INITIAL_SITES: Site[] = [
     location: "Egypt / Cairo, Nasr City",
     workingFrom: "Saturday",
     workingTo: "Wednesday",
-    siteType: "Recycling Facility",
     contactName: "Mona Fathy",
     contactPosition: "Operations Lead",
     contactPhone: "01021587913",
@@ -169,7 +165,6 @@ export const INITIAL_SITES: Site[] = [
     location: "Egypt / Cairo, 6th of October",
     workingFrom: "Sunday",
     workingTo: "Thursday",
-    siteType: "Recycling Facility",
     contactName: "Karim Adel",
     contactPosition: "Site Manager",
     contactPhone: "01021587914",
@@ -183,7 +178,6 @@ export const INITIAL_SITES: Site[] = [
     location: "Egypt / Cairo, Maadi",
     workingFrom: "Monday",
     workingTo: "Friday",
-    siteType: "Warehouse",
     contactName: "Sara Nabil",
     contactPosition: "Warehouse Keeper",
     contactPhone: "01021587915",
@@ -197,7 +191,6 @@ export const INITIAL_SITES: Site[] = [
     location: "Egypt / Alexandria, Miami",
     workingFrom: "Sunday",
     workingTo: "Tuesday",
-    siteType: "Collection Point",
     contactName: "Hossam Ali",
     contactPosition: "Field Supervisor",
     contactPhone: "01021587916",
@@ -211,7 +204,6 @@ export const INITIAL_SITES: Site[] = [
     location: "Egypt / Giza, Sheikh Zayed",
     workingFrom: "Saturday",
     workingTo: "Thursday",
-    siteType: "Transfer Station",
     contactName: "Nour Hassan",
     contactPosition: "Site Manager",
     contactPhone: "01021587917",
@@ -272,6 +264,113 @@ export const PASSWORD_RULES = [
   { label: "One uppercase letter", test: (v: string) => /[A-Z]/.test(v) },
   { label: "One number", test: (v: string) => /\d/.test(v) },
   { label: "One special character", test: (v: string) => /[^A-Za-z0-9]/.test(v) },
+];
+
+/* ---------------------------------------------------------------------------
+   Notification Preferences
+--------------------------------------------------------------------------- */
+export type NotificationChannel = "inApp" | "email" | "sms";
+
+export type NotificationRow = {
+  id: string;
+  title: string;
+  description: string;
+  channels: Record<NotificationChannel, boolean>;
+};
+
+export type NotificationGroup = {
+  id: string;
+  title: string;
+  /* the Account Security group uses the brand blue for its "on" state in Figma;
+     every other group uses green */
+  tone: "green" | "blue";
+  rows: NotificationRow[];
+};
+
+export const NOTIFICATION_CHANNELS: { key: NotificationChannel; label: string }[] = [
+  { key: "inApp", label: "In-App" },
+  { key: "email", label: "Email" },
+  { key: "sms", label: "SMS" },
+];
+
+export const INITIAL_NOTIFICATIONS: NotificationGroup[] = [
+  {
+    id: "auction-events",
+    title: "Auction Events",
+    tone: "green",
+    rows: [
+      {
+        id: "new-bid",
+        title: "New Bid Received",
+        description: "When someone places a bid on your items",
+        channels: { inApp: false, email: true, sms: false },
+      },
+      { id: "auction-won", title: "Auction Won", description: "When you win an auction", channels: { inApp: true, email: false, sms: true } },
+      {
+        id: "auction-closing",
+        title: "Auction Closing Soon",
+        description: "24 hours before auction ends",
+        channels: { inApp: false, email: true, sms: true },
+      },
+    ],
+  },
+  {
+    id: "payments",
+    title: "Payments & Withdrawals",
+    tone: "green",
+    rows: [
+      {
+        id: "payment-received",
+        title: "Payment Received",
+        description: "When you receive payment for sold items",
+        channels: { inApp: true, email: false, sms: false },
+      },
+      {
+        id: "withdrawal-processed",
+        title: "Withdrawal Processed",
+        description: "When your withdrawal request is completed",
+        channels: { inApp: false, email: true, sms: true },
+      },
+    ],
+  },
+  {
+    id: "inventory",
+    title: "Inventory Alerts",
+    tone: "green",
+    rows: [
+      {
+        id: "low-stock",
+        title: "Low Stock Alert",
+        description: "When inventory levels are running low",
+        channels: { inApp: false, email: true, sms: false },
+      },
+      {
+        id: "new-items",
+        title: "New Items Added",
+        description: "When new items are added to inventory",
+        channels: { inApp: true, email: false, sms: true },
+      },
+    ],
+  },
+  {
+    id: "account-security",
+    title: "Account Security",
+    tone: "blue",
+    rows: [
+      {
+        id: "suspicious-login",
+        title: "Suspicious Login Attempts",
+        description: "When unusual login activity is detected",
+        channels: { inApp: false, email: true, sms: false },
+      },
+      {
+        id: "password-changes",
+        title: "Password Changes",
+        description: "When your password is changed",
+        channels: { inApp: true, email: false, sms: true },
+      },
+    ],
+  },
 ];
 
 /* ---------------------------------------------------------------------------

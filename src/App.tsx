@@ -50,10 +50,11 @@ import {
   LOGIN_HISTORY,
   INITIAL_SECURITY_PREFS,
   INITIAL_TEAM,
+  INITIAL_NOTIFICATIONS,
   lookupRole,
   roleOverrideFromUrl,
 } from "./settingsData";
-import type { SecurityPreferences, Site, TeamMember, UserRole } from "./settingsData";
+import type { NotificationGroup, SecurityPreferences, Site, TeamMember, UserRole } from "./settingsData";
 import type { WasteSubmission } from "./components/modals/NewWasteTransaction";
 import type { MoneySubmission } from "./components/modals/NewMoneyTransaction";
 
@@ -119,6 +120,7 @@ export default function App() {
   const [sessions, setSessions] = useState(INITIAL_SESSIONS);
   const [securityPrefs, setSecurityPrefs] = useState<SecurityPreferences>(INITIAL_SECURITY_PREFS);
   const [team, setTeam] = useState<TeamMember[]>(INITIAL_TEAM);
+  const [notifications, setNotifications] = useState<NotificationGroup[]>(INITIAL_NOTIFICATIONS);
 
   const today = formatLedgerDate(new Date());
   const close = () => setModal(null);
@@ -366,6 +368,8 @@ export default function App() {
           onEndOtherSessions={() => setSessions((s) => s.filter((x) => x.current))}
           onChangePassword={() => setSettingsModal({ kind: "passwordChanged" })}
           onForgotPassword={() => setSettingsModal({ kind: "changePassword" })}
+          notifications={notifications}
+          onSaveNotifications={setNotifications}
           team={team}
           onAddUser={() => setSettingsModal({ kind: "addUser" })}
           onEditMember={(member) => setSettingsModal({ kind: "editMember", member })}

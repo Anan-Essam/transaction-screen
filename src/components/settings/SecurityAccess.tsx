@@ -1,27 +1,9 @@
 import { useState } from "react";
-import { SettingsCard, SettingsCardHeader, SettingsTable } from "./SettingsParts";
+import { SettingsCard, SettingsCardHeader, SettingsTable, SettingsToggle } from "./SettingsParts";
 import PasswordField from "./PasswordField";
 import { PasswordMgmtIcon, SecurityPrefsIcon, ActiveSessionsIcon, LoginHistoryIcon, DeviceIcon, SetNavLogoutIcon } from "../settingsIcons";
 import { PASSWORD_RULES } from "../../settingsData";
 import type { ActiveSession, LoginHistoryEntry, SecurityPreferences } from "../../settingsData";
-
-/* "Frame 465" — the preference toggle switch */
-function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-label={label}
-      onClick={onToggle}
-      className={`${on ? "bg-[#28459d]" : "bg-[#d9d9d9]"} h-[22px] relative rounded-[24px] shrink-0 w-[40px] cursor-pointer transition-colors duration-200`}
-    >
-      <span
-        className={`absolute top-[3px] size-[16px] rounded-full bg-white transition-[left] duration-200 ${on ? "left-[21px]" : "left-[3px]"}`}
-      />
-    </button>
-  );
-}
 
 function PreferenceRow({ title, description, on, onToggle }: { title: string; description: string; on: boolean; onToggle: () => void }) {
   return (
@@ -34,7 +16,7 @@ function PreferenceRow({ title, description, on, onToggle }: { title: string; de
           <p className="leading-[22px]">{description}</p>
         </div>
       </div>
-      <Toggle on={on} onToggle={onToggle} label={title} />
+      <SettingsToggle on={on} onToggle={onToggle} label={title} />
     </div>
   );
 }

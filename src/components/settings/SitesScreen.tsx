@@ -64,7 +64,6 @@ function SiteRow({ site, open, onToggle, onEdit }: { site: Site; open: boolean; 
   const siteRows = [
     { label: "Location:", value: site.location },
     { label: "Working Days:", value: `${site.workingFrom} - ${site.workingTo}` },
-    ...(site.siteType ? [{ label: "Site Type:", value: site.siteType }] : []),
   ];
   const contactRows = [
     ...(site.contactName ? [{ label: "Name:", value: site.contactName }] : []),
@@ -147,7 +146,7 @@ export default function SitesScreen({ sites, onAddSite, onEditSite }: SitesScree
       <SettingsCardHeader
         icon={<ActiveSessionsIcon className="size-[14px] shrink-0 text-[#131313]" />}
         title="Active Sessions"
-        action={<SettingsPrimaryButton label="+ Add New Site" variant="green" onClick={onAddSite} />}
+        action={<SettingsPrimaryButton label="+ Add New Site" variant="green" height={40} onClick={onAddSite} />}
       />
       <SettingsSearchBar
         search={search}

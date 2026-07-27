@@ -431,7 +431,6 @@ export function AddNewSiteModal({ initial, onClose, onSubmit }: { initial?: Site
       location: location.trim(),
       workingFrom: from,
       workingTo: to,
-      siteType: initial?.siteType,
       contactName: contactName.trim() || undefined,
       contactPosition: position.trim() || undefined,
       contactPhone: phone ? phone : undefined,

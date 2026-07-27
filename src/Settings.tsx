@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import SideBar from "./components/SideBar";
 import type { SideBarPage } from "./components/SideBar";
@@ -7,6 +8,7 @@ import AccountInformation from "./components/settings/AccountInformation";
 import SitesScreen from "./components/settings/SitesScreen";
 import SecurityAccess from "./components/settings/SecurityAccess";
 import UsersRoles from "./components/settings/UsersRoles";
+import NotificationPreferences from "./components/settings/NotificationPreferences";
 import {
   SetNavAccountIcon,
   SetNavSitesIcon,
@@ -19,6 +21,8 @@ import {
 import { Plus } from "./components/icons";
 import type {
   ActiveSession,
+  NotificationChannel,
+  NotificationGroup,
   CompanyInfo,
   KycDocument,
   LoginHistoryEntry,
@@ -122,6 +126,9 @@ export type SettingsProps = {
   onChangePassword: () => void;
   onForgotPassword: () => void;
 
+  notifications: NotificationGroup[];
+  onSaveNotifications: (groups: NotificationGroup[]) => void;
+
   team: TeamMember[];
   onAddUser: () => void;
   onEditMember: (member: TeamMember) => void;
@@ -136,12 +143,30 @@ export default function Settings(props: SettingsProps) {
   /* Guard as well as hide: a regular user can never end up on an Admin-only screen */
   const activeSection: SettingsSection = section === "users" && role !== "admin" ? "account" : section;
 
+  /* Notification Preferences edits a draft; the header's Save Changes button
+     commits it, so the draft lives here where both can reach it. */
+  const [notificationDraft, setNotificationDraft] = useState(props.notifications);
+  /* re-entering the screen starts from the saved state, so leaving without
+     saving abandons the draft */
+  useEffect(() => {
+    if (activeSection === "notifications") setNotificationDraft(props.notifications);
+  }, [activeSection, props.notifications]);
+  const notificationsDirty = JSON.stringify(notificationDraft) !== JSON.stringify(props.notifications);
+  const toggleNotification = (groupId: string, rowId: string, channel: NotificationChannel) =>
+    setNotificationDraft((list) =>
+      list.map((g) =>
+        g.id !== groupId
+          ? g
+          : { ...g, rows: g.rows.map((r) => (r.id !== rowId ? r : { ...r, channels: { ...r.channels, [channel]: !r.channels[channel] } })) },
+      ),
+    );
+
   const titles: Record<SettingsSection, { label: string; icon: ReactNode }> = {
     account: { label: "Account Information", icon: <SetNavAccountIcon className="size-[16px] shrink-0 text-[#131313]" /> },
     sites: { label: "Sites", icon: <SetNavSitesIcon className="size-[12px] shrink-0 text-[#131313]" /> },
     security: { label: "Security & Access", icon: <SetNavSecurityIcon className="size-[16px] shrink-0 text-[#131313]" /> },
     users: { label: "Users & Roles", icon: <UsersRolesTitleIcon className="size-[16px] shrink-0 text-[#131313]" /> },
-    notifications: { label: "Notifications", icon: <SetNavNotificationsIcon className="h-[16px] w-[15px] shrink-0 text-[#131313]" /> },
+    notifications: { label: "Notification Preferences", icon: <SetNavNotificationsIcon className="h-[16px] w-[15px] shrink-0 text-[#131313]" /> },
   };
 
   return (
@@ -164,6 +189,12 @@ export default function Settings(props: SettingsProps) {
                 action={
                   activeSection === "users" && role === "admin" ? (
                     <SettingsPrimaryButton label="Add User" icon={<Plus className="overflow-clip relative size-[18px]" />} onClick={props.onAddUser} />
+                  ) : activeSection === "notifications" ? (
+                    <SettingsPrimaryButton
+                      label="Save Changes"
+                      disabled={!notificationsDirty}
+                      onClick={() => props.onSaveNotifications(notificationDraft)}
+                    />
                   ) : undefined
                 }
               />
@@ -200,11 +231,7 @@ export default function Settings(props: SettingsProps) {
                 <UsersRoles team={props.team} onEditMember={props.onEditMember} onToggleMemberStatus={props.onToggleMemberStatus} />
               )}
 
-              {activeSection === "notifications" && (
-                <div className="bg-white font-cairo font-medium p-[24px] rounded-[24px] text-[14px] text-[rgba(19,19,19,0.6)] w-full">
-                  Notification preferences are not part of this build yet.
-                </div>
-              )}
+              {activeSection === "notifications" && <NotificationPreferences groups={notificationDraft} onToggle={toggleNotification} />}
             </div>
           </div>
         </div>

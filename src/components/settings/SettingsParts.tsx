@@ -20,12 +20,18 @@ type CardHeaderProps = {
   title: string;
   /* right-hand action — hidden entirely (not disabled) when the viewer may not use it */
   action?: ReactNode;
+  /* the Notification Preferences cards carry no rule under the title — the
+     table header below draws its own */
+  divider?: boolean;
 };
 
 /* "Frame 247" — card title row with a hairline rule underneath */
-export function SettingsCardHeader({ icon, title, action }: CardHeaderProps) {
+export function SettingsCardHeader({ icon, title, action, divider = true }: CardHeaderProps) {
   return (
-    <div className="border-[#f5f5f5] border-b border-solid content-stretch flex items-center justify-center pb-[16px] relative shrink-0 w-full" data-name="Frame 247">
+    <div
+      className={`${divider ? "border-[#f5f5f5] border-b border-solid pb-[16px] " : ""}content-stretch flex items-center justify-center relative shrink-0 w-full`}
+      data-name="Frame 247"
+    >
       <div className="content-stretch flex flex-[1_0_0] gap-[8px] items-center justify-between min-w-px relative" data-name="Frame 357">
         <div className="content-stretch flex gap-[5px] items-center relative shrink-0" data-name="Frame 534">
           {icon}
@@ -82,6 +88,24 @@ export function SettingsPageTitle({ icon, title, action }: { icon: ReactNode; ti
       </div>
       {action}
     </div>
+  );
+}
+
+/* "Frame 465" — the shared Settings toggle switch (41×22 with an 18px knob).
+   Figma tints the Account Security switches blue and everything else green. */
+export function SettingsToggle({ on, onToggle, label, tone = "blue" }: { on: boolean; onToggle: () => void; label: string; tone?: "green" | "blue" }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={onToggle}
+      className={`${on ? (tone === "green" ? "bg-[#1b9e74]" : "bg-[#28459d]") : "bg-[#ccc]"} border border-[#f5f5f5] border-solid h-[22px] overflow-clip relative rounded-[24px] shrink-0 w-[41px] cursor-pointer transition-colors duration-200`}
+      data-name="Frame 465"
+    >
+      <span className={`absolute bg-white rounded-[24px] size-[18px] top-px transition-[left] duration-200 ${on ? "left-[19px]" : "left-px"}`} />
+    </button>
   );
 }
 
@@ -182,12 +206,28 @@ export function SettingsSearchBar({
 }
 
 /* "Frame 131" — the primary pill button used for the screen-level actions */
-export function SettingsPrimaryButton({ label, icon, onClick, variant = "blue" }: { label: string; icon?: ReactNode; onClick: () => void; variant?: "blue" | "green" }) {
+export function SettingsPrimaryButton({
+  label,
+  icon,
+  onClick,
+  variant = "blue",
+  disabled,
+  height = 48,
+}: {
+  label: string;
+  icon?: ReactNode;
+  onClick: () => void;
+  variant?: "blue" | "green";
+  disabled?: boolean;
+  /* Figma: 48px for the page-level actions, 40px for the Sites card action */
+  height?: 40 | 48;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`${variant === "green" ? "bg-[#1b9e74]" : "bg-[#28459d]"} content-stretch flex gap-[8px] h-[40px] items-center justify-center px-[16px] relative rounded-[24px] shrink-0 cursor-pointer`}
+      disabled={disabled}
+      className={`${variant === "green" ? "bg-[#1b9e74]" : "bg-[#28459d]"} ${height === 40 ? "h-[40px]" : "h-[48px]"} content-stretch flex gap-[8px] items-center justify-center px-[16px] relative rounded-[24px] shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-default`}
       data-name="Frame 131"
     >
       {icon}
