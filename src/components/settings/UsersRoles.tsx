@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { SettingsCard, SettingsCardHeader, SettingsSearchBar, SettingsTable } from "./SettingsParts";
+import { SettingsCard, SettingsCardHeader, SettingsSearchBar, SettingsTable, SettingsPrimaryButton } from "./SettingsParts";
 import { UsersRolesTitleIcon, RolesFilterIcon, SetNavAccountIcon, PermCheckIcon, PermCrossIcon } from "../settingsIcons";
+import { Plus } from "../icons";
 import { ROLE_PERMISSIONS, ROLE_PILL, TEAM_ROLES, roleUserCount } from "../../settingsData";
 import type { TeamMember } from "../../settingsData";
 
@@ -84,13 +85,14 @@ function RolePermissionCardView({ role, description, permissions, users }: { rol
 
 type UsersRolesProps = {
   team: TeamMember[];
+  onAddUser: () => void;
   onEditMember: (member: TeamMember) => void;
   onToggleMemberStatus: (id: string) => void;
 };
 
 /* "Users & Roles" (Figma 506:12780) — Admin only; the Settings shell never
    mounts this screen for a regular user. */
-export default function UsersRoles({ team, onEditMember, onToggleMemberStatus }: UsersRolesProps) {
+export default function UsersRoles({ team, onAddUser, onEditMember, onToggleMemberStatus }: UsersRolesProps) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("All Roles");
 
@@ -104,15 +106,32 @@ export default function UsersRoles({ team, onEditMember, onToggleMemberStatus }:
   return (
     <div className="content-stretch flex flex-col gap-[24px] items-start relative shrink-0 w-full">
       <SettingsCard>
-        <SettingsCardHeader icon={<SetNavAccountIcon className="size-[14px] shrink-0 text-[#131313]" />} title="Team Member" />
-        <SettingsSearchBar
-          search={search}
-          onSearch={setSearch}
-          filterIcon={<RolesFilterIcon className="h-[13px] w-[15px] shrink-0 text-[rgba(19,19,19,0.7)]" />}
-          filterValue={roleFilter}
-          filterOptions={["All Roles", ...TEAM_ROLES]}
-          onFilter={setRoleFilter}
-          filterLabel="Filter by role"
+        <SettingsCardHeader
+          icon={<SetNavAccountIcon className="size-[14px] shrink-0 text-[#131313]" />}
+          title="Team Member"
+          divider={false}
+          action={
+            /* Figma moved the search, role filter and Add User into the card header */
+            <div className="content-stretch flex flex-col lg:flex-row gap-[16px] items-stretch lg:items-center min-w-0 relative" data-name="Frame 2085664033">
+              <div className="lg:w-[523px] max-w-full">
+                <SettingsSearchBar
+                  search={search}
+                  onSearch={setSearch}
+                  filterIcon={<RolesFilterIcon className="h-[13px] w-[15px] shrink-0 text-[rgba(19,19,19,0.7)]" />}
+                  filterValue={roleFilter}
+                  filterOptions={["All Roles", ...TEAM_ROLES]}
+                  onFilter={setRoleFilter}
+                  filterLabel="Filter by role"
+                />
+              </div>
+              <SettingsPrimaryButton
+                label="Add User"
+                variant="green"
+                icon={<Plus className="overflow-clip relative shrink-0 size-[18px]" />}
+                onClick={onAddUser}
+              />
+            </div>
+          }
         />
         <SettingsTable
           ariaLabel="Team members"

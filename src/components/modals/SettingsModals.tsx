@@ -583,7 +583,8 @@ export function LogOutModal({ onClose, onConfirm }: { onClose: () => void; onCon
 export function PasswordChangedDialog({ onClose }: { onClose: () => void }) {
   return (
     <SettingsModalShell width={470} onClose={onClose}>
-      <SettingsModalHeader title="Reset password" onClose={onClose} />
+      {/* the success dialog's title bar carries no leading icon in Figma */}
+      <SettingsModalHeader title="Reset password" onClose={onClose} icon={false} />
       <div className="content-stretch flex flex-col gap-[16px] items-center relative shrink-0 w-full">
         <img alt="" src={resetSuccessBadge} className="h-[96px] w-[91px] shrink-0 object-contain" />
         <div className="font-cairo font-bold text-[#131313] text-[20px] leading-[normal] text-center w-full">Password Reset Successful</div>

@@ -369,7 +369,15 @@ export default function App() {
           onChangePassword={() => setSettingsModal({ kind: "passwordChanged" })}
           onForgotPassword={() => setSettingsModal({ kind: "changePassword" })}
           notifications={notifications}
-          onSaveNotifications={setNotifications}
+          onToggleNotification={(groupId, rowId, channel) =>
+            setNotifications((list) =>
+              list.map((g) =>
+                g.id !== groupId
+                  ? g
+                  : { ...g, rows: g.rows.map((r) => (r.id !== rowId ? r : { ...r, channels: { ...r.channels, [channel]: !r.channels[channel] } })) },
+              ),
+            )
+          }
           team={team}
           onAddUser={() => setSettingsModal({ kind: "addUser" })}
           onEditMember={(member) => setSettingsModal({ kind: "editMember", member })}

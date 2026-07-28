@@ -37,6 +37,7 @@ function NotificationTable({ group, onToggle }: { group: NotificationGroup; onTo
               <SettingsToggle
                 key={c.key}
                 tone={group.tone}
+                width={41}
                 on={row.channels[c.key]}
                 onToggle={() => onToggle(row.id, c.key)}
                 label={`${row.title} — ${c.label}`}

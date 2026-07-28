@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import SideBar from "./components/SideBar";
 import type { SideBarPage } from "./components/SideBar";
 import { UserProfile, TopBar } from "./MoneyTransactions";
-import { SettingsPageTitle, SettingsPrimaryButton } from "./components/settings/SettingsParts";
 import AccountInformation from "./components/settings/AccountInformation";
 import SitesScreen from "./components/settings/SitesScreen";
 import SecurityAccess from "./components/settings/SecurityAccess";
@@ -16,9 +14,7 @@ import {
   SetNavUsersIcon,
   SetNavNotificationsIcon,
   SetNavLogoutIcon,
-  UsersRolesTitleIcon,
 } from "./components/settingsIcons";
-import { Plus } from "./components/icons";
 import type {
   ActiveSession,
   NotificationChannel,
@@ -45,8 +41,9 @@ const NAV_ITEMS: NavItem[] = [
   { key: "notifications", label: "Notifications", icon: (c) => <SetNavNotificationsIcon className={c} /> },
 ];
 
-/* "Frame 20" — the Settings sub-navigation card */
-function SettingsNav({
+/* "Frame 238" — the Settings tab bar. Figma moved the sub-navigation from a
+   left rail to a horizontal bar above the content, with a blue active pill. */
+function SettingsTabs({
   section,
   onSelect,
   onLogout,
@@ -57,12 +54,16 @@ function SettingsNav({
   onLogout: () => void;
   role: UserRole;
 }) {
-  /* Users & Roles is an Admin-only screen — a regular user never even sees the entry */
+  /* Users & Roles is an Admin-only screen — a regular user never even sees the tab */
   const items = NAV_ITEMS.filter((i) => (i.key === "users" ? role === "admin" : true));
 
   return (
-    <div className="bg-white content-stretch flex flex-col items-start p-[16px] relative rounded-[24px] shrink-0 w-full lg:w-[198px]" data-name="Frame 238">
-      <nav className="content-stretch flex flex-col gap-[16px] items-start justify-center relative shrink-0 w-full lg:w-[166px]" aria-label="Settings sections">
+    <div className="bg-white content-stretch flex items-start p-[8px] relative rounded-[32px] shrink-0 w-full" data-name="Frame 238">
+      <nav
+        className="content-stretch flex flex-[1_0_0] flex-wrap gap-[14px] items-center min-w-px relative"
+        aria-label="Settings sections"
+        data-name="Metrics Row"
+      >
         {items.map((item) => {
           const active = item.key === section;
           return (
@@ -71,8 +72,8 @@ function SettingsNav({
               type="button"
               onClick={() => onSelect(item.key)}
               aria-current={active ? "page" : undefined}
-              className={`content-stretch cursor-pointer flex gap-[8px] items-center p-[8px] relative rounded-[24px] shrink-0 w-full lg:w-[166px] text-left ${
-                active ? "bg-[#1b9e74]" : ""
+              className={`content-stretch cursor-pointer flex flex-[1_0_0] h-[32px] items-center justify-center min-w-[140px] relative ${
+                active ? "bg-[#28459d] gap-[4px] px-[16px] py-[8px] rounded-[24px]" : "gap-[8px] px-[8px] py-[4px]"
               }`}
             >
               {item.icon(`size-[12px] shrink-0 ${active ? "text-white" : "text-[#131313]"}`)}
@@ -87,7 +88,7 @@ function SettingsNav({
         <button
           type="button"
           onClick={onLogout}
-          className="content-stretch cursor-pointer flex gap-[8px] items-center p-[8px] relative rounded-[24px] shrink-0 w-full lg:w-[166px] text-left"
+          className="content-stretch cursor-pointer flex flex-[1_0_0] gap-[8px] h-[32px] items-center justify-center min-w-[140px] px-[8px] py-[4px] relative"
         >
           <SetNavLogoutIcon className="size-[12px] shrink-0 text-[#131313]" />
           <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
@@ -127,7 +128,7 @@ export type SettingsProps = {
   onForgotPassword: () => void;
 
   notifications: NotificationGroup[];
-  onSaveNotifications: (groups: NotificationGroup[]) => void;
+  onToggleNotification: (groupId: string, rowId: string, channel: NotificationChannel) => void;
 
   team: TeamMember[];
   onAddUser: () => void;
@@ -143,32 +144,6 @@ export default function Settings(props: SettingsProps) {
   /* Guard as well as hide: a regular user can never end up on an Admin-only screen */
   const activeSection: SettingsSection = section === "users" && role !== "admin" ? "account" : section;
 
-  /* Notification Preferences edits a draft; the header's Save Changes button
-     commits it, so the draft lives here where both can reach it. */
-  const [notificationDraft, setNotificationDraft] = useState(props.notifications);
-  /* re-entering the screen starts from the saved state, so leaving without
-     saving abandons the draft */
-  useEffect(() => {
-    if (activeSection === "notifications") setNotificationDraft(props.notifications);
-  }, [activeSection, props.notifications]);
-  const notificationsDirty = JSON.stringify(notificationDraft) !== JSON.stringify(props.notifications);
-  const toggleNotification = (groupId: string, rowId: string, channel: NotificationChannel) =>
-    setNotificationDraft((list) =>
-      list.map((g) =>
-        g.id !== groupId
-          ? g
-          : { ...g, rows: g.rows.map((r) => (r.id !== rowId ? r : { ...r, channels: { ...r.channels, [channel]: !r.channels[channel] } })) },
-      ),
-    );
-
-  const titles: Record<SettingsSection, { label: string; icon: ReactNode }> = {
-    account: { label: "Account Information", icon: <SetNavAccountIcon className="size-[16px] shrink-0 text-[#131313]" /> },
-    sites: { label: "Sites", icon: <SetNavSitesIcon className="size-[12px] shrink-0 text-[#131313]" /> },
-    security: { label: "Security & Access", icon: <SetNavSecurityIcon className="size-[16px] shrink-0 text-[#131313]" /> },
-    users: { label: "Users & Roles", icon: <UsersRolesTitleIcon className="size-[16px] shrink-0 text-[#131313]" /> },
-    notifications: { label: "Notification Preferences", icon: <SetNavNotificationsIcon className="h-[16px] w-[15px] shrink-0 text-[#131313]" /> },
-  };
-
   return (
     <div className="bg-[#f5f5f5] content-stretch flex flex-col items-start min-h-screen p-[24px] relative w-full" data-name="Settings">
       <div className="content-stretch flex flex-col lg:flex-row gap-[16px] items-start lg:justify-center relative shrink-0 w-full max-w-[1392px] mx-auto" data-name="Sidebar Container">
@@ -180,25 +155,9 @@ export default function Settings(props: SettingsProps) {
         </div>
         <div className="content-stretch flex flex-col gap-[19px] items-end relative shrink-0 w-full lg:w-auto lg:flex-[1_0_0] lg:max-w-[1159px] min-w-0">
           <TopBar />
-          <div className="content-stretch flex flex-col lg:flex-row gap-[19px] items-start relative shrink-0 w-full">
-            <SettingsNav section={activeSection} onSelect={onSection} onLogout={props.onRequestLogout} role={role} />
-            <div className="content-stretch flex flex-[1_0_0] flex-col gap-[19px] items-start min-w-px relative w-full">
-              <SettingsPageTitle
-                icon={titles[activeSection].icon}
-                title={titles[activeSection].label}
-                action={
-                  activeSection === "users" && role === "admin" ? (
-                    <SettingsPrimaryButton label="Add User" icon={<Plus className="overflow-clip relative size-[18px]" />} onClick={props.onAddUser} />
-                  ) : activeSection === "notifications" ? (
-                    <SettingsPrimaryButton
-                      label="Save Changes"
-                      disabled={!notificationsDirty}
-                      onClick={() => props.onSaveNotifications(notificationDraft)}
-                    />
-                  ) : undefined
-                }
-              />
-
+          <div className="content-stretch flex flex-col gap-[19px] items-start relative shrink-0 w-full">
+            <SettingsTabs section={activeSection} onSelect={onSection} onLogout={props.onRequestLogout} role={role} />
+            <div className="content-stretch flex flex-col gap-[19px] items-start relative shrink-0 w-full">
               {activeSection === "account" && (
                 <AccountInformation
                   role={role}
@@ -228,10 +187,10 @@ export default function Settings(props: SettingsProps) {
               )}
 
               {activeSection === "users" && role === "admin" && (
-                <UsersRoles team={props.team} onEditMember={props.onEditMember} onToggleMemberStatus={props.onToggleMemberStatus} />
+                <UsersRoles team={props.team} onAddUser={props.onAddUser} onEditMember={props.onEditMember} onToggleMemberStatus={props.onToggleMemberStatus} />
               )}
 
-              {activeSection === "notifications" && <NotificationPreferences groups={notificationDraft} onToggle={toggleNotification} />}
+              {activeSection === "notifications" && <NotificationPreferences groups={props.notifications} onToggle={props.onToggleNotification} />}
             </div>
           </div>
         </div>

@@ -21,8 +21,8 @@ function SiteChevron({ open }: { open: boolean }) {
 /* "Frame 500" — the permanent / temporary site pill */
 function PermanenceBadge({ permanence }: { permanence: Site["permanence"] }) {
   return (
-    <div className="bg-[rgba(40,69,157,0.1)] content-stretch flex items-center px-[8px] py-[4px] relative rounded-[16px] shrink-0" data-name="Frame 500">
-      <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#28459d] text-[11px] whitespace-nowrap">
+    <div className="bg-[#28459d] content-stretch flex gap-[8px] items-center justify-center px-[8px] py-[4px] relative rounded-[24px] shrink-0" data-name="Frame 500">
+      <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-white whitespace-nowrap">
         <p className="leading-[normal]">{permanence}</p>
       </div>
     </div>
@@ -104,7 +104,7 @@ function SiteRow({ site, open, onToggle, onEdit }: { site: Site; open: boolean; 
             </button>
           </div>
         </div>
-        <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-[rgba(19,19,19,0.6)] w-full">
+        <div className="[word-break:break-word] flex flex-col font-cairo font-semibold justify-center leading-[0] not-italic opacity-80 relative shrink-0 text-[14px] text-[rgba(19,19,19,0.7)] w-full">
           <p className="leading-[20px]">{site.region}</p>
         </div>
       </div>
@@ -146,7 +146,7 @@ export default function SitesScreen({ sites, onAddSite, onEditSite }: SitesScree
       <SettingsCardHeader
         icon={<ActiveSessionsIcon className="size-[14px] shrink-0 text-[#131313]" />}
         title="Active Sessions"
-        action={<SettingsPrimaryButton label="+ Add New Site" variant="green" height={40} onClick={onAddSite} />}
+        action={<SettingsPrimaryButton label={"+  Add New Site"} variant="green" height={40} onClick={onAddSite} />}
       />
       <SettingsSearchBar
         search={search}

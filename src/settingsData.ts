@@ -334,16 +334,10 @@ export const INITIAL_NOTIFICATIONS: NotificationGroup[] = [
     ],
   },
   {
-    id: "inventory",
-    title: "Inventory Alerts",
+    id: "product-library",
+    title: "Product Library",
     tone: "green",
     rows: [
-      {
-        id: "low-stock",
-        title: "Low Stock Alert",
-        description: "When inventory levels are running low",
-        channels: { inApp: false, email: true, sms: false },
-      },
       {
         id: "new-items",
         title: "New Items Added",

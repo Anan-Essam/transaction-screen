@@ -76,24 +76,22 @@ export function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-/* "Frame 191" — the screen heading above the cards */
-export function SettingsPageTitle({ icon, title, action }: { icon: ReactNode; title: string; action?: ReactNode }) {
-  return (
-    <div className="content-stretch flex gap-[16px] items-center justify-between relative shrink-0 w-full" data-name="Frame 191">
-      <div className="content-stretch flex gap-[8px] items-center relative shrink-0" data-name="Frame 550">
-        {icon}
-        <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[18px] whitespace-nowrap">
-          <p className="leading-[normal]">{title}</p>
-        </div>
-      </div>
-      {action}
-    </div>
-  );
-}
-
-/* "Frame 465" — the shared Settings toggle switch (41×22 with an 18px knob).
-   Figma tints the Account Security switches blue and everything else green. */
-export function SettingsToggle({ on, onToggle, label, tone = "blue" }: { on: boolean; onToggle: () => void; label: string; tone?: "green" | "blue" }) {
+/* "Frame 465" — the shared Settings toggle switch (22px tall, 18px knob).
+   Figma tints the Account Security switches blue and everything else green, and
+   seats the knob on the LEFT when on / the RIGHT when off on every screen. */
+export function SettingsToggle({
+  on,
+  onToggle,
+  label,
+  tone = "blue",
+  width = 40,
+}: {
+  on: boolean;
+  onToggle: () => void;
+  label: string;
+  tone?: "green" | "blue";
+  width?: 40 | 41;
+}) {
   return (
     <button
       type="button"
@@ -101,10 +99,10 @@ export function SettingsToggle({ on, onToggle, label, tone = "blue" }: { on: boo
       aria-checked={on}
       aria-label={label}
       onClick={onToggle}
-      className={`${on ? (tone === "green" ? "bg-[#1b9e74]" : "bg-[#28459d]") : "bg-[#ccc]"} border border-[#f5f5f5] border-solid h-[22px] overflow-clip relative rounded-[24px] shrink-0 w-[41px] cursor-pointer transition-colors duration-200`}
+      className={`${on ? (tone === "green" ? "bg-[#1b9e74]" : "bg-[#28459d]") : "bg-[#ccc]"} ${width === 41 ? "w-[41px]" : "w-[40px]"} border border-[#f5f5f5] border-solid h-[22px] overflow-clip relative rounded-[24px] shrink-0 cursor-pointer transition-colors duration-200`}
       data-name="Frame 465"
     >
-      <span className={`absolute bg-white rounded-[24px] size-[18px] top-px transition-[left] duration-200 ${on ? "left-[19px]" : "left-px"}`} />
+      <span className={`absolute bg-white rounded-[24px] size-[18px] top-px transition-[left] duration-200 ${on ? "left-px" : "left-[19px]"}`} />
     </button>
   );
 }
@@ -231,7 +229,7 @@ export function SettingsPrimaryButton({
       data-name="Frame 131"
     >
       {icon}
-      <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[16px] text-white whitespace-nowrap">
+      <div className="[word-break:break-word] flex flex-col font-cairo font-bold justify-center leading-[0] not-italic relative shrink-0 text-[16px] text-white whitespace-pre">
         <p className="leading-[normal]">{label}</p>
       </div>
     </button>

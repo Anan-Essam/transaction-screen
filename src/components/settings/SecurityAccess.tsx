@@ -10,10 +10,10 @@ function PreferenceRow({ title, description, on, onToggle }: { title: string; de
     <div className="content-stretch flex gap-[16px] items-center justify-between relative shrink-0 w-full" data-name="Frame 547">
       <div className="[word-break:break-word] content-stretch flex flex-col items-start leading-[0] not-italic relative shrink-0" data-name="Frame 542">
         <div className="flex flex-col font-cairo font-bold justify-center relative shrink-0 text-[#131313] text-[14px]">
-          <p className="leading-[26px]">{title}</p>
+          <p className="leading-[normal]">{title}</p>
         </div>
         <div className="flex flex-col font-cairo font-normal justify-center relative shrink-0 text-[12px] text-[rgba(19,19,19,0.6)]">
-          <p className="leading-[22px]">{description}</p>
+          <p className="leading-[normal]">{description}</p>
         </div>
       </div>
       <SettingsToggle on={on} onToggle={onToggle} label={title} />
@@ -130,7 +130,7 @@ export default function SecurityAccess({
               />
               <PreferenceRow
                 title="Auto logout"
-                description="Automatically logout after inactivity"
+                description="Automatically logout after inactivity For 8"
                 on={prefs.autoLogout}
                 onToggle={() => onTogglePref("autoLogout")}
               />
