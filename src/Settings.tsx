@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import SideBar from "./components/SideBar";
 import type { SideBarPage } from "./components/SideBar";
 import { UserProfile, TopBar } from "./MoneyTransactions";
@@ -7,14 +6,9 @@ import SitesScreen from "./components/settings/SitesScreen";
 import SecurityAccess from "./components/settings/SecurityAccess";
 import UsersRoles from "./components/settings/UsersRoles";
 import NotificationPreferences from "./components/settings/NotificationPreferences";
-import {
-  SetNavAccountIcon,
-  SetNavSitesIcon,
-  SetNavSecurityIcon,
-  SetNavUsersIcon,
-  SetNavNotificationsIcon,
-  SetNavLogoutIcon,
-} from "./components/settingsIcons";
+import SettingsTabs from "./components/settings/SettingsTabs";
+export type { SettingsSection } from "./components/settings/SettingsTabs";
+import type { SettingsSection } from "./components/settings/SettingsTabs";
 import type {
   ActiveSession,
   NotificationChannel,
@@ -28,77 +22,6 @@ import type {
   UserInfo,
   UserRole,
 } from "./settingsData";
-
-export type SettingsSection = "account" | "sites" | "security" | "users" | "notifications";
-
-type NavItem = { key: SettingsSection; label: string; icon: (className: string) => ReactNode };
-
-const NAV_ITEMS: NavItem[] = [
-  { key: "account", label: "Account Information", icon: (c) => <SetNavAccountIcon className={c} /> },
-  { key: "sites", label: "Sites", icon: (c) => <SetNavSitesIcon className={c} /> },
-  { key: "security", label: "Security & Access", icon: (c) => <SetNavSecurityIcon className={c} /> },
-  { key: "users", label: "Users & Roles", icon: (c) => <SetNavUsersIcon className={c} /> },
-  { key: "notifications", label: "Notifications", icon: (c) => <SetNavNotificationsIcon className={c} /> },
-];
-
-/* "Frame 238" — the Settings tab bar. Figma moved the sub-navigation from a
-   left rail to a horizontal bar above the content, with a blue active pill. */
-function SettingsTabs({
-  section,
-  onSelect,
-  onLogout,
-  role,
-}: {
-  section: SettingsSection;
-  onSelect: (s: SettingsSection) => void;
-  onLogout: () => void;
-  role: UserRole;
-}) {
-  /* Users & Roles is an Admin-only screen — a regular user never even sees the tab */
-  const items = NAV_ITEMS.filter((i) => (i.key === "users" ? role === "admin" : true));
-
-  return (
-    <div className="bg-white content-stretch flex items-start p-[8px] relative rounded-[32px] shrink-0 w-full" data-name="Frame 238">
-      <nav
-        className="content-stretch flex flex-[1_0_0] flex-wrap gap-[14px] items-center min-w-px relative"
-        aria-label="Settings sections"
-        data-name="Metrics Row"
-      >
-        {items.map((item) => {
-          const active = item.key === section;
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => onSelect(item.key)}
-              aria-current={active ? "page" : undefined}
-              className={`content-stretch cursor-pointer flex flex-[1_0_0] h-[32px] items-center justify-center min-w-[140px] relative ${
-                active ? "bg-[#28459d] gap-[4px] px-[16px] py-[8px] rounded-[24px]" : "gap-[8px] px-[8px] py-[4px]"
-              }`}
-            >
-              {item.icon(`size-[12px] shrink-0 ${active ? "text-white" : "text-[#131313]"}`)}
-              <div
-                className={`[word-break:break-word] flex flex-col font-cairo ${active ? "font-bold text-white" : "font-normal text-[#131313]"} justify-center leading-[0] not-italic relative shrink-0 text-[14px] whitespace-nowrap`}
-              >
-                <p className="leading-[normal]">{item.label}</p>
-              </div>
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          onClick={onLogout}
-          className="content-stretch cursor-pointer flex flex-[1_0_0] gap-[8px] h-[32px] items-center justify-center min-w-[140px] px-[8px] py-[4px] relative"
-        >
-          <SetNavLogoutIcon className="size-[12px] shrink-0 text-[#131313]" />
-          <div className="[word-break:break-word] flex flex-col font-cairo font-normal justify-center leading-[0] not-italic relative shrink-0 text-[#131313] text-[14px] whitespace-nowrap">
-            <p className="leading-[normal]">Log Out</p>
-          </div>
-        </button>
-      </nav>
-    </div>
-  );
-}
 
 export type SettingsProps = {
   role: UserRole;
