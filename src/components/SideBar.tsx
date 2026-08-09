@@ -11,7 +11,7 @@ import {
 import { ProductLibraryIconWhite, TransactionIconDark } from "./icons3";
 import { DashboardIconWhite } from "./icons4";
 
-export type SideBarPage = "dashboard" | "myAuctions" | "productLibrary" | "transaction" | "settings";
+export type SideBarPage = "dashboard" | "myAuctions" | "productLibrary" | "transaction" | "esgReports" | "settings";
 
 type SideBarItemProps = {
   icon: React.ReactNode;
@@ -106,13 +106,19 @@ export default function SideBar({ className, active = "transaction", onNavigate 
           ) : (
             <SideBarItem icon={<TransactionIconDark />} label="Transaction" onClick={() => go("transaction")} />
           )}
-          <SideBarItem
-            icon={<ReportsIcon />}
-            label="Reports"
-            onClick={() => {
-              /* navigate to Reports */
-            }}
-          />
+          {active === "esgReports" ? (
+            <ActiveSideBarItem
+              icon={
+                <div className="brightness-0 invert">
+                  <ReportsIcon />
+                </div>
+              }
+              label="ESG Reports"
+              onClick={() => go("esgReports")}
+            />
+          ) : (
+            <SideBarItem icon={<ReportsIcon />} label="ESG Reports" onClick={() => go("esgReports")} />
+          )}
           {active === "settings" ? (
             <ActiveSideBarItem
               icon={
@@ -129,7 +135,7 @@ export default function SideBar({ className, active = "transaction", onNavigate 
         </div>
       </div>
       <div
-        className={`absolute hidden lg:flex ${active === "dashboard" ? "inset-[2.54%_0.25%_86.34%_99.75%]" : active === "myAuctions" ? "inset-[9%_0.25%_78.56%_99.75%]" : active === "productLibrary" ? "inset-[15.47%_0.25%_70.77%_99.75%]" : active === "settings" ? "inset-[36.89%_0.25%_49.35%_99.75%]" : "inset-[22.87%_0.25%_63.37%_99.75%]"} items-center justify-center`}
+        className={`absolute hidden lg:flex ${active === "dashboard" ? "inset-[2.54%_0.25%_86.34%_99.75%]" : active === "myAuctions" ? "inset-[9%_0.25%_78.56%_99.75%]" : active === "productLibrary" ? "inset-[15.47%_0.25%_70.77%_99.75%]" : active === "esgReports" ? "inset-[29.89%_0.25%_56.35%_99.75%]" : active === "settings" ? "inset-[36.89%_0.25%_49.35%_99.75%]" : "inset-[22.87%_0.25%_63.37%_99.75%]"} items-center justify-center`}
         style={{ containerType: "size" }}
       >
         <div className="-rotate-90 flex-none h-[0px] w-[100cqh]">

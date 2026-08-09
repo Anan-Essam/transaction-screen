@@ -38,3 +38,54 @@ body,
 #root {
   min-height: 100%;
 }
+
+/* ESG & Sustainability Disclosure — print view.
+   The Print action calls window.print(), so the printed page has to be the
+   report on its own: no sidebar, no top bar, no filter or action chrome, no
+   grey app background, and cards that don't split across a page break. */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 0;
+    background: #fff;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .esg-print-hide {
+    display: none !important;
+  }
+
+  .esg-print-page {
+    background: #fff !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  .esg-print-shell {
+    display: block !important;
+    max-width: none !important;
+  }
+
+  .esg-print-main {
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  .esg-report {
+    gap: 12px !important;
+  }
+
+  .esg-avoid-break {
+    break-inside: avoid;
+  }
+}

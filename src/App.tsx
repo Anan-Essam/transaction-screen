@@ -11,6 +11,7 @@ import type { AcceptRequest } from "./AuctionDetail";
 import WasteTransactions from "./TransactionDetail";
 import ProductLibrary from "./ProductLibrary";
 import Homepage from "./Dashboard";
+import EsgReport from "./EsgReport";
 import AddNewItem from "./components/modals/AddNewItem";
 import productPhoto from "./assets/figma/productPhoto.jpg";
 import modalPhoto from "./assets/figma/modalPhoto.jpg";
@@ -344,6 +345,8 @@ export default function App() {
         ) : (
           <MyAuctions auctions={auctions} onNavigate={navigate} onOpenAuction={(a) => setAuctionId(a.id)} />
         )
+      ) : page === "esgReports" ? (
+        <EsgReport onNavigate={navigate} />
       ) : page === "settings" ? (
         <Settings
           role={role}
