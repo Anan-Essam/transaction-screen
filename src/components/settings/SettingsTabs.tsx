@@ -13,14 +13,16 @@ export type SettingsSection = "account" | "sites" | "security" | "users" | "noti
 
 type TabDef = { key: SettingsSection | "logout"; label: string; icon: (className: string) => ReactNode };
 
-/* "Metrics Row" — the six Settings tabs, in Figma's order */
+/* "Frame 57" — the six Settings tabs, in Figma's order. The icon callback is
+   handed the shrink/colour classes and each glyph adds its own Figma size:
+   10 × 10 for all of them except the bell, which is 9.167 × 10.017. */
 const TABS: TabDef[] = [
-  { key: "account", label: "Account Information", icon: (c) => <SetNavAccountIcon className={c} /> },
-  { key: "sites", label: "Sites", icon: (c) => <SetNavSitesIcon className={c} /> },
-  { key: "security", label: "Security & Access", icon: (c) => <SetNavSecurityIcon className={c} /> },
-  { key: "users", label: "Users & Roles", icon: (c) => <SetNavUsersIcon className={c} /> },
-  { key: "notifications", label: "Notifications", icon: (c) => <SetNavNotificationsIcon className={c} /> },
-  { key: "logout", label: "Log Out", icon: (c) => <SetNavLogoutIcon className={c} /> },
+  { key: "account", label: "Account Information", icon: (c) => <SetNavAccountIcon className={`${c} size-[10px]`} /> },
+  { key: "sites", label: "Sites", icon: (c) => <SetNavSitesIcon className={`${c} size-[10px]`} /> },
+  { key: "security", label: "Security & Access", icon: (c) => <SetNavSecurityIcon className={`${c} size-[10px]`} /> },
+  { key: "users", label: "Users & Roles", icon: (c) => <SetNavUsersIcon className={`${c} size-[10px]`} /> },
+  { key: "notifications", label: "Notifications", icon: (c) => <SetNavNotificationsIcon className={`${c} h-[10.017px] w-[9.167px]`} /> },
+  { key: "logout", label: "Log Out", icon: (c) => <SetNavLogoutIcon className={`${c} size-[10px]`} /> },
 ];
 
 type SettingsTabsProps = {
@@ -30,53 +32,64 @@ type SettingsTabsProps = {
   role: UserRole;
 };
 
-/* "Frame 238" — the Settings tab bar, shared by all five Settings screens.
-   Figma: a 48px white bar (8px padding, 32px radius) holding one 32px-tall
-   row of equal-width tabs separated by 14px. The active tab is a #28459d
-   pill (16/8 padding, 24px radius, 4px gap, Cairo Bold 14 white); the rest
-   sit flat (8/4 padding, 8px gap, Cairo Regular 14 #131313). Both carry a
-   12px icon.
+/* "Frame 2085664004" — the Settings tab rail, shared by all five Settings
+   screens. Figma stacks the tabs vertically down a 172px white card (16px
+   padding, 24px radius) that stretches to the height of the content beside it.
+   Each tab is 38px tall (8px padding around a 22px line) with a 10px icon and
+   an 8px gap; they sit 16px apart. Only the active tab is painted — a #1b9e74
+   pill that fills the card's 140px content width, with its label in Cairo Bold
+   12 white. The rest hug their own content in Cairo Regular 12 #131313.
 
-   The columns are an explicit equal-width grid rather than flex, so the
-   active tab's larger horizontal padding cannot make it wider than its
-   siblings — Figma lays all six out at the same width. */
+   Below `lg` the rail spans the full width and sits above the content, so the
+   tabs keep their vertical reading order on narrow screens. */
 export default function SettingsTabs({ section, onSelect, onLogout, role }: SettingsTabsProps) {
   /* Users & Roles is Admin-only — a regular user never even sees the tab */
   const tabs = TABS.filter((t) => (t.key === "users" ? role === "admin" : true));
 
   return (
-    <div className="bg-white content-stretch flex items-start p-[8px] relative rounded-[32px] shrink-0 w-full" data-name="Frame 238">
-      <nav
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(var(--tab-count),minmax(0,1fr))] gap-[14px] items-center relative w-full"
-        style={{ ["--tab-count" as string]: tabs.length }}
-        aria-label="Settings sections"
-        data-name="Metrics Row"
+    <div
+      className="content-stretch flex flex-col items-start justify-center relative shrink-0 w-full lg:w-[172px]"
+      data-name="Frame 2085664004"
+    >
+      {/* the card only stretches once the rail sits beside the content — below
+          `lg` its height comes from the tabs themselves */}
+      <div
+        className="bg-white content-stretch flex flex-col items-start lg:flex-[1_0_0] lg:min-h-px p-[16px] relative rounded-[24px] w-full"
+        data-name="Frame 238"
       >
-        {tabs.map((tab) => {
-          const active = tab.key === section;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              data-name={active ? "Metric Product" : "Tab"}
-              onClick={() => (tab.key === "logout" ? onLogout() : onSelect(tab.key as SettingsSection))}
-              aria-current={active ? "page" : undefined}
-              className={`content-stretch cursor-pointer flex h-[32px] items-center justify-center min-w-0 relative rounded-[24px] ${
-                active ? "bg-[#28459d] gap-[4px] px-[16px] py-[8px]" : "gap-[8px] px-[8px] py-[4px]"
-              }`}
-            >
-              {tab.icon(`size-[12px] shrink-0 ${active ? "text-white" : "text-[#131313]"}`)}
-              <div
-                className={`[word-break:break-word] flex flex-col font-cairo ${
-                  active ? "font-bold text-white" : "font-normal text-[#131313]"
-                } justify-center leading-[0] min-w-0 not-italic relative text-[14px]`}
-              >
-                <p className="leading-[normal] overflow-hidden text-ellipsis whitespace-nowrap">{tab.label}</p>
-              </div>
-            </button>
-          );
-        })}
-      </nav>
+        <div className="content-stretch flex flex-col items-start lg:flex-[1_0_0] lg:min-h-px overflow-clip relative w-full" data-name="Frame 20">
+          <nav
+            className="content-stretch flex flex-col gap-[16px] items-start justify-center relative shrink-0 w-full"
+            aria-label="Settings sections"
+            data-name="Frame 57"
+          >
+            {tabs.map((tab) => {
+              const active = tab.key === section;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  data-name={active ? "Frame 48" : "Frame 57"}
+                  onClick={() => (tab.key === "logout" ? onLogout() : onSelect(tab.key as SettingsSection))}
+                  aria-current={active ? "page" : undefined}
+                  className={`content-stretch cursor-pointer flex gap-[8px] items-center max-w-full min-w-0 p-[8px] relative shrink-0 ${
+                    active ? "bg-[#1b9e74] rounded-[24px] w-full" : ""
+                  }`}
+                >
+                  {tab.icon(`shrink-0 ${active ? "text-white" : "text-[#131313]"}`)}
+                  <div
+                    className={`[word-break:break-word] flex flex-col font-cairo ${
+                      active ? "font-bold text-white" : "font-normal text-[#131313]"
+                    } justify-center leading-[0] min-w-0 not-italic relative text-[12px] text-left`}
+                  >
+                    <p className="leading-[22px] overflow-hidden text-ellipsis whitespace-nowrap">{tab.label}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
     </div>
   );
 }

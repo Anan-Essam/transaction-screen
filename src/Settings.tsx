@@ -78,9 +78,10 @@ export default function Settings(props: SettingsProps) {
         </div>
         <div className="content-stretch flex flex-col gap-[19px] items-end relative shrink-0 w-full lg:w-auto lg:flex-[1_0_0] lg:max-w-[1159px] min-w-0">
           <TopBar />
-          <div className="content-stretch flex flex-col gap-[19px] items-start relative shrink-0 w-full">
+          {/* "Frame 532" — the tab rail runs down the left of the section content */}
+          <div className="content-stretch flex flex-col lg:flex-row gap-[19px] items-stretch relative shrink-0 w-full" data-name="Frame 532">
             <SettingsTabs section={activeSection} onSelect={onSection} onLogout={props.onRequestLogout} role={role} />
-            <div className="content-stretch flex flex-col gap-[19px] items-start relative shrink-0 w-full">
+            <div className="content-stretch flex flex-col gap-[19px] items-start lg:flex-[1_0_0] min-w-0 relative shrink-0 w-full" data-name="Frame 533">
               {activeSection === "account" && (
                 <AccountInformation
                   role={role}
